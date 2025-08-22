@@ -41,4 +41,8 @@ def ensure_data_directory():
 
 # Get absolute path to data directory
 def get_data_directory() -> Path:
-    return Path(__file__).parent.parent.parent / settings.data_directory
+    data_path = Path(settings.data_directory)
+    if data_path.is_absolute():
+        return data_path
+    else:
+        return Path(__file__).parent.parent.parent / settings.data_directory

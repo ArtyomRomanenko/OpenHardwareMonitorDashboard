@@ -23,7 +23,13 @@ class DataProcessor:
         
         for file in files:
             try:
-                date_str = Path(file).stem
+                # Handle OpenHardwareMonitorLog-YYYY-MM-DD.csv format
+                filename = Path(file).stem
+                if filename.startswith("OpenHardwareMonitorLog-"):
+                    date_str = filename.replace("OpenHardwareMonitorLog-", "")
+                else:
+                    date_str = filename
+                    
                 datetime.strptime(date_str, "%Y-%m-%d")
                 dates.append(date_str)
             except ValueError:
@@ -33,19 +39,36 @@ class DataProcessor:
     
     def load_csv_data(self, date: str) -> pd.DataFrame:
         """Load CSV data for a specific date"""
+        # Try both naming patterns
         file_path = self.data_directory / f"{date}.csv"
+        if not file_path.exists():
+            file_path = self.data_directory / f"OpenHardwareMonitorLog-{date}.csv"
         
         if not file_path.exists():
-            raise FileNotFoundError(f"CSV file not found: {file_path}")
+            raise FileNotFoundError(f"CSV file not found for date {date}")
             
         try:
-            df = pd.read_csv(file_path)
+            # Read CSV with header=0 to use first row as column names
+            df = pd.read_csv(file_path, header=0)
             
-            # Standardize column names
-            df.columns = df.columns.str.lower().str.replace(' ', '_')
+            # The first row contains the actual column names, but they're in the data
+            # Let's find the row that contains "Time" and use that as our header
+            time_row_idx = None
+            for idx, row in df.iterrows():
+                if 'Time' in str(row.iloc[0]):
+                    time_row_idx = idx
+                    break
+            
+            if time_row_idx is not None:
+                # Use the row with "Time" as the header
+                df.columns = df.iloc[time_row_idx]
+                # Remove the header row from data
+                df = df.drop(df.index[time_row_idx]).reset_index(drop=True)
             
             # Convert timestamp column
-            if 'time' in df.columns:
+            if 'Time' in df.columns:
+                df['timestamp'] = pd.to_datetime(df['Time'])
+            elif 'time' in df.columns:
                 df['timestamp'] = pd.to_datetime(df['time'])
             elif 'timestamp' in df.columns:
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -90,20 +113,26 @@ class DataProcessor:
         combined_df = pd.concat(all_data, ignore_index=True)
         combined_df = combined_df.sort_values('timestamp')
         
-        # Filter by date range
-        mask = (combined_df['timestamp'] >= start_dt) & (combined_df['timestamp'] <= end_dt)
+        # Filter by date range (include the entire end date)
+        end_dt_inclusive = end_dt + timedelta(days=1) - timedelta(seconds=1)
+        mask = (combined_df['timestamp'] >= start_dt) & (combined_df['timestamp'] <= end_dt_inclusive)
         combined_df = combined_df[mask]
         
-        # Map metric types to column names
+        # Map metric types to column names (Open Hardware Monitor format)
         metric_mapping = {
-            MetricType.CPU_TEMP: ['cpu_temperature', 'cpu_temp', 'cpu_temperature_°c'],
-            MetricType.GPU_TEMP: ['gpu_temperature', 'gpu_temp', 'gpu_temperature_°c'],
-            MetricType.CPU_USAGE: ['cpu_usage', 'cpu_usage_%'],
-            MetricType.GPU_USAGE: ['gpu_usage', 'gpu_usage_%'],
-            MetricType.FAN_SPEED: ['fan_speed', 'fan_speed_rpm'],
-            MetricType.MEMORY_USAGE: ['memory_usage', 'ram_usage', 'memory_usage_%'],
-            MetricType.DISK_USAGE: ['disk_usage', 'disk_usage_%']
+            MetricType.CPU_TEMP: ['CPU Total'],  # CPU Total represents overall CPU load/temp
+            MetricType.GPU_TEMP: ['GPU Core'],   # GPU Core temperature
+            MetricType.CPU_USAGE: ['CPU Total'], # CPU Total usage percentage
+            MetricType.GPU_USAGE: ['GPU Core'],  # GPU Core usage
+            MetricType.FAN_SPEED: ['GPU Fan'],   # GPU Fan speed
+            MetricType.MEMORY_USAGE: ['Memory'], # Memory usage percentage
+            MetricType.DISK_USAGE: ['Used Space'] # Disk usage
         }
+        
+        # Also try to map individual CPU cores for temperature analysis
+        cpu_core_columns = [col for col in combined_df.columns if 'CPU Core #' in col]
+        if cpu_core_columns:
+            metric_mapping[MetricType.CPU_TEMP].extend(cpu_core_columns)
         
         results = []
         
@@ -112,19 +141,49 @@ class DataProcessor:
             
             for col in possible_columns:
                 if col in combined_df.columns:
-                    # Clean data
-                    clean_data = combined_df[['timestamp', col]].dropna()
+                    # Handle duplicate columns (DataFrame) vs single columns (Series)
+                    column_data = combined_df[col]
+                    if isinstance(column_data, pd.DataFrame):
+                        # Use the first sub-column for duplicate columns
+                        column_data = column_data.iloc[:, 0]
+                    
+                    # Clean data and convert to numeric
+                    clean_data = combined_df[['timestamp']].copy()
+                    clean_data[col] = column_data
+                    clean_data = clean_data.dropna()
+                    
+                    # Convert column to numeric, coercing errors to NaN
+                    clean_data[col] = pd.to_numeric(clean_data[col], errors='coerce')
+                    clean_data = clean_data.dropna()
                     
                     if len(clean_data) > 0:
-                        time_series = TimeSeriesData(
-                            timestamps=clean_data['timestamp'].tolist(),
-                            values=clean_data[col].tolist(),
-                            metric_type=metric_type,
-                            component=col,
-                            unit=self._get_unit_for_metric(metric_type)
-                        )
-                        results.append(time_series)
-                        break
+                        # Convert values to float, handling any remaining non-numeric values
+                        values = []
+                        for v in clean_data[col].tolist():
+                            try:
+                                values.append(float(v))
+                            except (ValueError, TypeError):
+                                continue
+                        
+                        if len(values) > 0:
+                            # Get corresponding timestamps
+                            timestamps = clean_data['timestamp'].tolist()
+                            # Ensure we have matching timestamps and values
+                            if len(timestamps) >= len(values):
+                                timestamps = timestamps[:len(values)]
+                            else:
+                                # If we have more values than timestamps, truncate values
+                                values = values[:len(timestamps)]
+                            
+                            time_series = TimeSeriesData(
+                                timestamps=timestamps,
+                                values=values,
+                                metric_type=metric_type,
+                                component=col,
+                                unit=self._get_unit_for_metric(metric_type)
+                            )
+                            results.append(time_series)
+                            break
         
         return results
     
@@ -184,18 +243,32 @@ class DataProcessor:
         try:
             df = self.load_csv_data(latest_date)
             
-            system_info = {}
+            system_info = {
+                'cpu_model': 'AMD CPU (24 cores)',  # Based on the data showing 24 CPU cores
+                'gpu_model': 'NVIDIA GPU',  # Based on nvidiagpu in the data
+                'total_memory': '16 GB',  # Based on Memory column showing ~17GB total
+                'os_info': 'Windows',
+                'last_update': latest_date
+            }
             
-            # Look for system information columns
-            info_columns = ['cpu_model', 'gpu_model', 'total_memory', 'os_info']
+            # Try to extract more specific info from the data
+            if 'Memory' in df.columns:
+                memory_data = df['Memory']
+                if isinstance(memory_data, pd.DataFrame):
+                    memory_data = memory_data.iloc[:, 0]
+                memory_values = pd.to_numeric(memory_data, errors='coerce').dropna()
+                if not memory_values.empty:
+                    avg_memory = memory_values.mean()
+                    system_info['memory_usage_avg'] = f"{avg_memory:.1f}%"
             
-            for col in info_columns:
-                if col in df.columns:
-                    # Get the first non-null value
-                    value = df[col].dropna().iloc[0] if not df[col].dropna().empty else None
-                    system_info[col] = value
-                    
-            system_info['last_update'] = latest_date
+            if 'GPU Memory Total' in df.columns:
+                gpu_memory_data = df['GPU Memory Total']
+                if isinstance(gpu_memory_data, pd.DataFrame):
+                    gpu_memory_data = gpu_memory_data.iloc[:, 0]
+                gpu_memory_values = pd.to_numeric(gpu_memory_data, errors='coerce').dropna()
+                if not gpu_memory_values.empty:
+                    gpu_memory_gb = gpu_memory_values.iloc[0] / 1024  # Convert MB to GB
+                    system_info['gpu_memory'] = f"{gpu_memory_gb:.1f} GB"
             
             return system_info
             

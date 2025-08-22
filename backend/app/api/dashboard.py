@@ -27,20 +27,35 @@ async def get_dashboard_overview(
         # Get system info
         system_info = data_processor.get_system_info()
         
-        # Get quick overview
-        overview_response = await router.get("/quick-overview")(days=days)
+        # Get quick overview data directly
+        key_metrics = [MetricType.CPU_TEMP, MetricType.GPU_TEMP, MetricType.CPU_USAGE, MetricType.MEMORY_USAGE]
+        metrics_data = data_processor.get_metrics_for_period(start_date_str, end_date_str, key_metrics)
+        
+        overview = {}
+        for metric_data in metrics_data:
+            if not metric_data.values:
+                continue
+            values = metric_data.values
+            overview[metric_data.metric_type.value] = {
+                "current": round(values[-1], 2) if values else 0,
+                "average": round(sum(values) / len(values), 2) if values else 0,
+                "max": round(max(values), 2) if values else 0,
+                "min": round(min(values), 2) if values else 0,
+                "unit": metric_data.unit
+            }
         
         # Get health summary
         health_summary = insights_engine.get_health_summary(start_date_str, end_date_str)
         
         # Get recent insights
-        insights_response = await router.get("/recent")(days=days)
+        insights = insights_engine.analyze_period(start_date_str, end_date_str)
+        recent_insights = insights[:5]  # Get first 5 insights
         
         return {
             "system_info": system_info,
-            "overview": overview_response,
+            "overview": overview,
             "health_summary": health_summary,
-            "recent_insights": insights_response,
+            "recent_insights": recent_insights,
             "period": {"start_date": start_date_str, "end_date": end_date_str, "days": days}
         }
         
