@@ -7,7 +7,9 @@ import {
   AlertTriangle, 
   CheckCircle,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { dashboardAPI } from '../services/api';
 import MetricCard from '../components/MetricCard';
@@ -29,40 +31,242 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState(7);
+  const [retryCount, setRetryCount] = useState(0);
+  const [loadingTime, setLoadingTime] = useState(0);
+  const [isLongRequest, setIsLongRequest] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, [timeRange]);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (loading && isLongRequest) {
+      interval = setInterval(() => {
+        setLoadingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setLoadingTime(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loading, isLongRequest]);
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
+      setLoadingTime(0);
+      
+      // Set long request flag for time ranges that might take longer
+      setIsLongRequest(timeRange >= 14);
+      
+      console.log(`Fetching dashboard data for ${timeRange} days...`);
+      
       const response = await dashboardAPI.getOverview(timeRange);
+      console.log('Dashboard response:', response.data);
+      
       setData(response.data);
+      setIsLongRequest(false);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load dashboard data');
+      console.error('Dashboard error:', err);
+      setIsLongRequest(false);
+      
+      let errorMessage = 'Failed to load dashboard data';
+      
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        errorMessage = `Request timed out after ${loadingTime} seconds. The ${timeRange}-day period contains a lot of data and may take longer to process.`;
+      } else if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const detail = err.response.data?.detail || 'Unknown server error';
+        
+        if (status === 500) {
+          errorMessage = `Server error: ${detail}`;
+        } else if (status === 404) {
+          errorMessage = `Data not found for ${timeRange} days`;
+        } else if (status === 400) {
+          errorMessage = `Invalid request: ${detail}`;
+        } else {
+          errorMessage = `HTTP ${status}: ${detail}`;
+        }
+      } else if (err.request) {
+        // Request was made but no response received
+        errorMessage = 'No response from server. Is the backend running?';
+      } else {
+        // Something else happened
+        errorMessage = err.message || 'Network error occurred';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    fetchDashboardData();
+  };
+
+  const handleTimeRangeChange = (newTimeRange: number) => {
+    setTimeRange(newTimeRange);
+    setError(null); // Clear previous errors when changing time range
+    setRetryCount(0); // Reset retry count
+  };
+
+  const getTimeRangeWarning = (days: number) => {
+    if (days >= 30) {
+      return "⚠️ 30+ days may take 1-2 minutes to load due to large data volume";
+    } else if (days >= 14) {
+      return "⏱️ 14+ days may take 30-60 seconds to process";
+    }
+    return null;
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner />
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Hardware monitoring overview for the last {timeRange} days
+            </p>
+            {getTimeRangeWarning(timeRange) && (
+              <p className="mt-1 text-sm text-yellow-600">
+                {getTimeRangeWarning(timeRange)}
+              </p>
+            )}
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <select
+              value={timeRange}
+              onChange={(e) => handleTimeRangeChange(Number(e.target.value))}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value={1}>Last 24 hours</option>
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <LoadingSpinner />
+            <div className="mt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Loading Dashboard Data
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Processing {timeRange} days of hardware monitoring data...
+              </p>
+              
+              {isLongRequest && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 max-w-md mx-auto">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-blue-400 mr-2" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-medium">Large dataset detected</p>
+                      <p>This may take {timeRange >= 30 ? '1-2 minutes' : '30-60 seconds'} to process</p>
+                      <p className="mt-1">Elapsed time: {loadingTime}s</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-4 text-sm text-gray-400">
+                Please wait while we analyze your hardware data...
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <div className="flex">
-          <AlertTriangle className="h-5 w-5 text-red-400" />
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error loading dashboard</h3>
-            <div className="mt-2 text-sm text-red-700">{error}</div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Hardware monitoring overview for the last {timeRange} days
+            </p>
+            {getTimeRangeWarning(timeRange) && (
+              <p className="mt-1 text-sm text-yellow-600">
+                {getTimeRangeWarning(timeRange)}
+              </p>
+            )}
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <select
+              value={timeRange}
+              onChange={(e) => handleTimeRangeChange(Number(e.target.value))}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value={1}>Last 24 hours</option>
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        <div className="bg-red-50 border border-red-200 rounded-md p-6">
+          <div className="flex items-start">
+            <AlertTriangle className="h-6 w-6 text-red-400 mt-0.5" />
+            <div className="ml-3 flex-1">
+              <h3 className="text-lg font-medium text-red-800">Error loading dashboard</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+              
+              {/* Troubleshooting Tips */}
+              <div className="mt-4 bg-red-100 rounded-md p-4">
+                <h4 className="font-medium text-red-800 mb-2">Troubleshooting Tips:</h4>
+                <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
+                  <li>Make sure the backend server is running</li>
+                  <li>Try selecting a shorter time period first (7 days instead of 30)</li>
+                  <li>Large time ranges (30+ days) may timeout - try 14 days first</li>
+                  <li>Check the browser console for more detailed error information</li>
+                  <li>Your data contains {timeRange} days of CSV files which may be large</li>
+                </ul>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="mt-4 flex space-x-3">
+                <button
+                  onClick={handleRetry}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry ({retryCount})
+                </button>
+                
+                <button
+                  onClick={() => handleTimeRangeChange(7)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Try 7 Days
+                </button>
+                
+                <button
+                  onClick={() => handleTimeRangeChange(14)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Try 14 Days
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +274,45 @@ const Dashboard: React.FC = () => {
   }
 
   if (!data) {
-    return null;
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Hardware monitoring overview for the last {timeRange} days
+            </p>
+            {getTimeRangeWarning(timeRange) && (
+              <p className="mt-1 text-sm text-yellow-600">
+                {getTimeRangeWarning(timeRange)}
+              </p>
+            )}
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <select
+              value={timeRange}
+              onChange={(e) => handleTimeRangeChange(Number(e.target.value))}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value={1}>Last 24 hours</option>
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-6">
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-yellow-800 mb-2">No Dashboard Data</h3>
+            <p className="text-yellow-700">
+              No dashboard data available. Try selecting a different time period or check if the backend is running.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const { system_info, overview, health_summary, recent_insights } = data;
@@ -84,15 +326,21 @@ const Dashboard: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">
             Hardware monitoring overview for the last {timeRange} days
           </p>
+          {getTimeRangeWarning(timeRange) && (
+            <p className="mt-1 text-sm text-yellow-600">
+              {getTimeRangeWarning(timeRange)}
+            </p>
+          )}
         </div>
         <div className="mt-4 sm:mt-0">
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(Number(e.target.value))}
+            onChange={(e) => handleTimeRangeChange(Number(e.target.value))}
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           >
             <option value={1}>Last 24 hours</option>
             <option value={7}>Last 7 days</option>
+            <option value={14}>Last 14 days</option>
             <option value={30}>Last 30 days</option>
           </select>
         </div>

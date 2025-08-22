@@ -1,22 +1,22 @@
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Optional, List
 
 class Settings(BaseSettings):
-    # Application settings
-    app_name: str = "Open Hardware Monitor Dashboard"
-    debug: bool = True
+    """Application settings"""
     
-    # Data settings
+    # Data directory path
     data_directory: str = "E:/Downloads/openhardwaremonitor-v0.9.5/OpenHardwareMonitor"
-    csv_file_pattern: str = "*.csv"
     
-    # Database settings
-    database_url: str = "sqlite:///./hardware_monitor.db"
+    # CSV processing limits
+    max_csv_size_mb: int = 100  # Maximum CSV file size in MB
+    max_rows_per_file: int = 100000  # Maximum rows to process per CSV file
+    chunk_size: int = 10000  # Number of rows to process at once
     
     # API settings
     api_prefix: str = "/api/v1"
+    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     
     # Hardware thresholds (in Celsius)
     cpu_temp_warning: float = 80.0
