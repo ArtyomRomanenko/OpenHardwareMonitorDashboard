@@ -315,7 +315,17 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const { system_info, overview, health_summary, recent_insights } = data;
+    const { system_info, overview, health_summary, recent_insights } = data;
+  
+  // Debug data structure
+  console.log('Dashboard data structure:', {
+    system_info: !!system_info,
+    overview: overview,
+    health_summary: !!health_summary,
+    recent_insights: recent_insights
+  });
+  console.log('Overview metrics:', overview?.metrics);
+  console.log('Overview data points:', overview?.data_points);
 
   return (
     <div className="space-y-6">
@@ -354,20 +364,32 @@ const Dashboard: React.FC = () => {
       {/* Health Status */}
       <HealthStatusCard healthSummary={health_summary} />
 
-      {/* Quick Metrics */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {overview?.metrics && Object.entries(overview.metrics).map(([key, metric]: [string, any]) => (
-          <MetricCard
-            key={key}
-            title={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            value={metric.current}
-            unit={metric.unit}
-            change={metric.average ? ((metric.current - metric.average) / metric.average * 100) : 0}
-            icon={getMetricIcon(key)}
-            status={getMetricStatus(key, metric.current)}
-          />
-        ))}
-      </div>
+             {/* Quick Metrics */}
+       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+         {overview?.metrics && Object.keys(overview.metrics).length > 0 ? (
+           Object.entries(overview.metrics).map(([key, metric]: [string, any]) => (
+             <MetricCard
+               key={key}
+               title={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+               value={metric.current}
+               unit={metric.unit}
+               change={metric.average ? ((metric.current - metric.average) / metric.average * 100) : 0}
+               icon={getMetricIcon(key)}
+               status={getMetricStatus(key, metric.current)}
+             />
+           ))
+         ) : (
+           <div className="col-span-full bg-yellow-50 border border-yellow-200 rounded-md p-6">
+             <div className="text-center">
+               <h3 className="text-lg font-medium text-yellow-800 mb-2">No Metrics Data</h3>
+               <p className="text-yellow-700">
+                 No hardware metrics data available for the selected time period. 
+                 This may indicate that no CSV files were found or the data format is not recognized.
+               </p>
+             </div>
+           </div>
+         )}
+       </div>
 
       {/* Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -377,29 +399,36 @@ const Dashboard: React.FC = () => {
           loading={false}
         />
         
-        {/* Performance Summary */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Performance Summary
-            </h3>
-            <div className="space-y-4">
-              {overview?.metrics && Object.entries(overview.metrics).map(([key, metric]: [string, any]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full mr-3 ${getStatusColor(key, metric.current)}`} />
-                    <span className="text-sm font-medium text-gray-900">
-                      {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {metric.current}{metric.unit} / {metric.average?.toFixed(1)}{metric.unit} avg
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                 {/* Performance Summary */}
+         <div className="bg-white overflow-hidden shadow rounded-lg">
+           <div className="px-4 py-5 sm:p-6">
+             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+               Performance Summary
+             </h3>
+             <div className="space-y-4">
+               {overview?.metrics && Object.keys(overview.metrics).length > 0 ? (
+                 Object.entries(overview.metrics).map(([key, metric]: [string, any]) => (
+                   <div key={key} className="flex items-center justify-between">
+                     <div className="flex items-center">
+                       <div className={`w-3 h-3 rounded-full mr-3 ${getStatusColor(key, metric.current)}`} />
+                       <span className="text-sm font-medium text-gray-900">
+                         {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                       </span>
+                     </div>
+                     <div className="text-sm text-gray-500">
+                       {metric.current}{metric.unit} / {metric.average?.toFixed(1)}{metric.unit} avg
+                     </div>
+                   </div>
+                 ))
+               ) : (
+                 <div className="text-center py-8">
+                   <div className="text-gray-400 text-4xl mb-2">📊</div>
+                   <p className="text-sm text-gray-500">No performance data available</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         </div>
       </div>
 
       {/* Data Summary */}

@@ -219,22 +219,48 @@ const Metrics: React.FC = () => {
     }
   };
 
-  const getSafeChartData = (values: any[], maxPoints: number = 100): number[] => {
+  const getSafeChartData = (values: any[], maxPoints: number = 500): { values: number[], indices: number[] } => {
     try {
-      if (!Array.isArray(values)) return [];
-      if (values.length === 0) return [];
+      if (!Array.isArray(values)) return { values: [], indices: [] };
+      if (values.length === 0) return { values: [], indices: [] };
       
-      // For very large datasets, sample the data to prevent rendering issues
+      // For very large datasets, use smart sampling to preserve time range
       if (values.length > maxPoints) {
         const step = Math.floor(values.length / maxPoints);
-        const sampled = values.filter((_, index) => index % step === 0).slice(0, maxPoints);
-        return sampled.filter(v => typeof v === 'number' && isFinite(v));
+        const sampledIndices: number[] = [];
+        const sampledValues: number[] = [];
+        
+        // Always include first and last points to preserve range boundaries
+        sampledIndices.push(0);
+        sampledValues.push(values[0]);
+        
+        // Sample middle points
+        for (let i = step; i < values.length - step; i += step) {
+          if (typeof values[i] === 'number' && isFinite(values[i])) {
+            sampledIndices.push(i);
+            sampledValues.push(values[i]);
+          }
+        }
+        
+        // Always include last point
+        if (values.length > 1) {
+          sampledIndices.push(values.length - 1);
+          sampledValues.push(values[values.length - 1]);
+        }
+        
+        return { 
+          values: sampledValues.filter(v => typeof v === 'number' && isFinite(v)),
+          indices: sampledIndices
+        };
       }
       
-      return values.filter(v => typeof v === 'number' && isFinite(v));
+      // For smaller datasets, return all data with sequential indices
+      const validValues = values.filter(v => typeof v === 'number' && isFinite(v));
+      const indices = validValues.map((_, i) => i);
+      return { values: validValues, indices };
     } catch (error) {
       console.error('getSafeChartData error:', error);
-      return [];
+      return { values: [], indices: [] };
     }
   };
 
@@ -255,8 +281,13 @@ const Metrics: React.FC = () => {
     try {
       if (!metric || !Array.isArray(metric.values)) return null;
       
-      const values = getSafeChartData(metric.values, 100);
-      const timestamps = metric.timestamps ? metric.timestamps.slice(0, values.length) : [];
+      const chartData = getSafeChartData(metric.values, 500);
+      const values = chartData.values;
+      const indices = chartData.indices;
+      
+      // Get timestamps corresponding to the sampled indices
+      const timestamps = metric.timestamps ? 
+        indices.map(idx => metric.timestamps[idx]).filter(Boolean) : [];
       
       const colors = [
         'rgba(59, 130, 246, 0.8)',   // Blue
@@ -274,14 +305,31 @@ const Metrics: React.FC = () => {
       switch (chartType) {
         case 'line':
           return {
-            labels: timestamps.length > 0 ? timestamps.map((_: any, i: number) => `Point ${i + 1}`) : values.map((_: any, i: number) => `Point ${i + 1}`),
+            labels: timestamps.length > 0 ? timestamps.map((timestamp: any) => {
+              try {
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) {
+                  return timestamp; // Return original if parsing fails
+                }
+                // Format as "MM/DD HH:MM" for better readability
+                return date.toLocaleDateString('en-US', { 
+                  month: '2-digit', 
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                });
+              } catch (error) {
+                return timestamp; // Return original if formatting fails
+              }
+            }) : values.map((_: any, i: number) => `Point ${i + 1}`),
             datasets: [{
               label: metricType?.label || metric.metric_type,
               data: values,
               borderColor: color,
-              backgroundColor: color.replace('0.8', '0.1'),
+              backgroundColor: 'transparent',
               borderWidth: 2,
-              fill: true,
+              fill: false,
               tension: 0.4,
               pointRadius: 3,
               pointHoverRadius: 6
@@ -311,10 +359,28 @@ const Metrics: React.FC = () => {
           return {
             datasets: [{
               label: metricType?.label || metric.metric_type,
-              data: values.map((value, index) => ({
-                x: index,
-                y: value
-              })),
+              data: values.map((value, index) => {
+                if (timestamps.length > index) {
+                  try {
+                    const timestamp = timestamps[index];
+                    const date = new Date(timestamp);
+                    if (!isNaN(date.getTime())) {
+                      // Use timestamp as X value for scatter plot
+                      return {
+                        x: date.getTime(), // Use milliseconds since epoch
+                        y: value
+                      };
+                    }
+                  } catch (error) {
+                    // Fallback to index if timestamp parsing fails
+                  }
+                }
+                // Fallback to index-based positioning
+                return {
+                  x: indices[index] || index,
+                  y: value
+                };
+              }),
               backgroundColor: color,
               borderColor: color.replace('0.8', '1'),
               pointRadius: 4,
@@ -379,38 +445,45 @@ const Metrics: React.FC = () => {
       }
     };
 
-    // Only add scales for charts that need them
-    if (chartType === 'line' || chartType === 'scatter') {
-      return {
-        ...baseOptions,
-        scales: {
-          x: {
-            display: true,
-            title: {
-              display: true,
-              text: chartType === 'line' ? 'Data Points' : 'Data Point Index',
-              font: { weight: 'bold' as const }
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)',
-              drawBorder: false
-            }
-          },
-          y: {
-            display: true,
-            title: {
-              display: true,
-              text: metric.unit || 'Value',
-              font: { weight: 'bold' as const }
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)',
-              drawBorder: false
-            }
-          }
-        }
-      };
-    }
+         // Only add scales for charts that need them
+     if (chartType === 'line' || chartType === 'scatter') {
+       return {
+         ...baseOptions,
+         scales: {
+           x: {
+             display: true,
+             title: {
+               display: true,
+               text: chartType === 'line' ? 'Time' : 'Time',
+               font: { weight: 'bold' as const }
+             },
+             grid: {
+               color: 'rgba(0, 0, 0, 0.1)',
+               drawBorder: false
+             },
+             // For line charts, rotate labels if they're too long
+             ticks: chartType === 'line' ? {
+               maxRotation: 45,
+               minRotation: 0,
+               autoSkip: true,
+               maxTicksLimit: 15
+             } : undefined
+           },
+           y: {
+             display: true,
+             title: {
+               display: true,
+               text: metric.unit || 'Value',
+               font: { weight: 'bold' as const }
+             },
+             grid: {
+               color: 'rgba(0, 0, 0, 0.1)',
+               drawBorder: false
+             }
+           }
+         }
+       };
+     }
     
     // For pie and doughnut charts, return base options without scales
     return baseOptions;
@@ -429,9 +502,11 @@ const Metrics: React.FC = () => {
         return null;
       }
       
-      const stats = getMetricStats(metric.values);
-      const metricType = metricTypes.find(mt => mt.value === metric.metric_type);
-      const isLargeDataset = metric.values.length > 1000;
+             // Get the same sampled data that's used in charts for consistent statistics
+       const chartData = getSafeChartData(metric.values, 500);
+       const stats = getMetricStats(chartData.values);
+       const metricType = metricTypes.find(mt => mt.value === metric.metric_type);
+       const isLargeDataset = metric.values.length > 1000;
       
       return (
         <div key={index} className="bg-white shadow rounded-lg p-6">
@@ -440,22 +515,27 @@ const Metrics: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900">
                 {metricType?.label || metric.metric_type || 'Unknown Metric'}
               </h3>
-              <p className="text-sm text-gray-500">
-                {metric.component || 'Unknown'} • {metric.unit || ''} • {metric.values.length.toLocaleString()} data points
-                {isLargeDataset && (
-                  <span className="ml-2 text-yellow-600 font-medium">
-                    (Large dataset - chart sampled)
-                  </span>
-                )}
-              </p>
+                             <p className="text-sm text-gray-500">
+                 {metric.component || 'Unknown'} • {metric.unit || ''} • {chartData.values.length.toLocaleString()} displayed / {metric.values.length.toLocaleString()} total data points
+                 {isLargeDataset && (
+                   <span className="ml-2 text-yellow-600 font-medium">
+                     (Large dataset - chart shows full time range with smart sampling)
+                   </span>
+                 )}
+               </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-gray-900">
                 {stats.avg.toFixed(1)}{metric.unit || ''}
               </div>
-              <div className="text-sm text-gray-500">
-                Min: {stats.min.toFixed(1)} | Max: {stats.max.toFixed(1)}
-              </div>
+                             <div className="text-sm text-gray-500">
+                 Min: {stats.min.toFixed(1)} | Max: {stats.max.toFixed(1)}
+                 {isLargeDataset && (
+                   <span className="block text-xs text-yellow-600">
+                     (based on sampled data)
+                   </span>
+                 )}
+               </div>
             </div>
           </div>
 
@@ -506,34 +586,66 @@ const Metrics: React.FC = () => {
             })()}
           </div>
 
-          {/* Data Table */}
-          <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">
-              Recent Data Points {isLargeDataset && `(showing first 10 of ${metric.values.length.toLocaleString()})`}
-            </h4>
-            <div className="max-h-40 overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Index</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {metric.values.slice(0, 10).map((value: any, idx: number) => (
-                    <tr key={idx}>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {idx}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {typeof value === 'number' ? value.toFixed(2) : String(value)}{metric.unit || ''}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                     {/* Data Table */}
+           <div className="mt-4">
+                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                 Recent Data Points {isLargeDataset && `(showing first 10 of ${chartData.values.length.toLocaleString()} sampled from ${metric.values.length.toLocaleString()} total)`}
+               </h4>
+             <div className="max-h-40 overflow-y-auto">
+               <table className="min-w-full divide-y divide-gray-200">
+                 <thead className="bg-gray-50">
+                   <tr>
+                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                   </tr>
+                 </thead>
+                 <tbody className="bg-white divide-y divide-gray-200">
+                   {(() => {
+                     // Get sampled data for the table to match the chart
+                     const chartData = getSafeChartData(metric.values, 500);
+                     const tableValues = chartData.values.slice(0, 10);
+                     const tableIndices = chartData.indices.slice(0, 10);
+                     
+                     return tableValues.map((value: any, tableIdx: number) => {
+                       const originalIdx = tableIndices[tableIdx];
+                       const timestamp = metric.timestamps && metric.timestamps[originalIdx] ? metric.timestamps[originalIdx] : null;
+                       let timeDisplay = `Point ${originalIdx + 1}`;
+                       
+                       if (timestamp) {
+                         try {
+                           const date = new Date(timestamp);
+                           if (!isNaN(date.getTime())) {
+                             timeDisplay = date.toLocaleString('en-US', {
+                               month: '2-digit',
+                               day: '2-digit',
+                               year: 'numeric',
+                               hour: '2-digit',
+                               minute: '2-digit',
+                               second: '2-digit',
+                               hour12: false
+                             });
+                           }
+                         } catch (error) {
+                           timeDisplay = timestamp; // Use original timestamp if parsing fails
+                         }
+                       }
+                       
+                       return (
+                         <tr key={tableIdx}>
+                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                             {timeDisplay}
+                           </td>
+                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                             {typeof value === 'number' ? value.toFixed(2) : String(value)}{metric.unit || ''}
+                           </td>
+                         </tr>
+                       );
+                     });
+                   })()}
+                 </tbody>
+               </table>
+             </div>
+           </div>
         </div>
       );
     } catch (error) {
@@ -729,10 +841,10 @@ const Metrics: React.FC = () => {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">Large Dataset Detected</h3>
-                  <p className="mt-1 text-sm text-yellow-700">
-                    Some metrics contain large amounts of data. Charts are automatically sampled to prevent performance issues. 
-                    Full data is available in the data table below.
-                  </p>
+                                     <p className="mt-1 text-sm text-yellow-700">
+                     Some metrics contain large amounts of data. Charts are automatically sampled to prevent performance issues while preserving the full time range. 
+                     Statistics and charts show sampled data, full data is available in the data table below.
+                   </p>
                 </div>
               </div>
             </div>

@@ -149,13 +149,6 @@ class DataProcessor:
             for col in df.columns:
                 if col != 'timestamp' and col != 'Time':
                     try:
-                        # Handle duplicate columns (DataFrame) vs single columns (Series)
-                        column_data = df[col]
-                        if isinstance(column_data, pd.DataFrame):
-                            # Use the first sub-column for duplicate columns
-                            column_data = column_data.iloc[:, 0]
-                            df[col] = column_data
-                        
                         # Try to convert to numeric, coercing errors to NaN
                         df[col] = pd.to_numeric(df[col], errors='coerce')
                         numeric_columns.append(col)
@@ -439,10 +432,7 @@ class DataProcessor:
             # Extract GPU memory (GPU Memory Total column)
             if 'GPU Memory Total' in df.columns:
                 try:
-                    gpu_memory_data = df['GPU Memory Total']
-                    if isinstance(gpu_memory_data, pd.DataFrame):
-                        gpu_memory_data = gpu_memory_data.iloc[:, 0]
-                    gpu_memory_values = pd.to_numeric(gpu_memory_data, errors='coerce').dropna()
+                    gpu_memory_values = pd.to_numeric(df['GPU Memory Total'], errors='coerce').dropna()
                     if len(gpu_memory_values) > 0:
                         system_info['gpu_memory'] = float(gpu_memory_values.mean())
                         print(f"GPU memory avg: {system_info['gpu_memory']}")
@@ -453,10 +443,7 @@ class DataProcessor:
             # Extract disk usage (Used Space column)
             if 'Used Space' in df.columns:
                 try:
-                    disk_data = df['Used Space']
-                    if isinstance(disk_data, pd.DataFrame):
-                        disk_data = disk_data.iloc[:, 0]
-                    disk_values = pd.to_numeric(disk_data, errors='coerce').dropna()
+                    disk_values = pd.to_numeric(df['Used Space'], errors='coerce').dropna()
                     if len(disk_values) > 0:
                         system_info['disk_usage'] = float(disk_values.mean())
                         print(f"Disk usage avg: {system_info['disk_usage']}")

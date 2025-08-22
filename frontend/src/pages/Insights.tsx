@@ -2,6 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { insightsAPI, metricsAPI } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+interface AnomalyEvent {
+  timestamp: string;
+  value: number;
+  severity: 'minor' | 'moderate' | 'severe';
+  description: string;
+  expected_range: [number, number];
+}
+
 interface HardwareInsight {
   id: string;
   title: string;
@@ -12,6 +20,12 @@ interface HardwareInsight {
   timestamp: string;
   recommendations: string[];
   data: Record<string, any>;
+  // New enhanced fields
+  events: AnomalyEvent[];
+  period_start: string;
+  period_end: string;
+  anomaly_count: number;
+  baseline_stats: Record<string, number>;
 }
 
 interface HealthSummary {
@@ -21,6 +35,11 @@ interface HealthSummary {
   healthy_metrics: number;
   recommendations: number;
   insight_counts: Record<string, number>;
+  total_anomalies: number;
+  period: {
+    start_date: string;
+    end_date: string;
+  };
 }
 
 interface SystemInfo {
@@ -75,14 +94,25 @@ const Insights: React.FC = () => {
       const systemResponse = await metricsAPI.getSystemInfo();
       setSystemInfo(systemResponse.data);
       
-      // Load recent insights (last 7 days)
-      const insightsResponse = await insightsAPI.getRecentInsights(7);
-      setInsights(insightsResponse.data.insights || []);
+      // Set default date range to last 7 days
+      const endDate = new Date();
+      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      setDateRange({
+        start: startDate.toISOString().split('T')[0],
+        end: endDate.toISOString().split('T')[0]
+      });
+      
+      // Load insights for default period
+      const insightsResponse = await insightsAPI.analyzePeriod(
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
+      );
+      setInsights(insightsResponse.data.insights || insightsResponse.data || []);
       
       // Load health summary
       const healthResponse = await insightsAPI.getHealthSummary(
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        new Date().toISOString().split('T')[0]
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
       );
       setHealthSummary(healthResponse.data);
       
@@ -119,6 +149,11 @@ const Insights: React.FC = () => {
       }
       
       setInsights(response.data.insights || response.data || []);
+      
+      // Also update health summary for the new period
+      const healthResponse = await insightsAPI.getHealthSummary(dateRange.start, dateRange.end);
+      setHealthSummary(healthResponse.data);
+      
       setError(null);
     } catch (err) {
       setError('Failed to load filtered insights');
@@ -180,9 +215,18 @@ const Insights: React.FC = () => {
       if (isNaN(date.getTime())) {
         return timestamp; // Return original if parsing fails
       }
-      return date.toLocaleTimeString();
+      return date.toLocaleString();
     } catch {
       return timestamp; // Return original if parsing fails
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'severe': return 'bg-red-100 text-red-800';
+      case 'moderate': return 'bg-yellow-100 text-yellow-800';
+      case 'minor': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -199,7 +243,7 @@ const Insights: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hardware Insights</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Intelligent analysis and recommendations for your hardware
+          Intelligent analysis and recommendations for your hardware with anomaly detection
         </p>
       </div>
 
@@ -247,7 +291,7 @@ const Insights: React.FC = () => {
       {healthSummary && (
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">System Health Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{healthSummary.overall_health}</div>
               <div className="text-sm text-gray-500">Overall Status</div>
@@ -264,6 +308,10 @@ const Insights: React.FC = () => {
               <div className="text-2xl font-bold text-green-600">{healthSummary.recommendations}</div>
               <div className="text-sm text-gray-500">Recommendations</div>
             </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{healthSummary.total_anomalies || 0}</div>
+              <div className="text-sm text-gray-500">Anomalies</div>
+            </div>
           </div>
           {healthSummary.insight_counts && (
             <div className="mt-4">
@@ -275,6 +323,14 @@ const Insights: React.FC = () => {
                     <span className="font-medium">{count}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+          {healthSummary.period && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Analysis Period</h4>
+              <div className="text-sm text-gray-600">
+                {formatDate(healthSummary.period.start_date)} to {formatDate(healthSummary.period.end_date)}
               </div>
             </div>
           )}
@@ -365,8 +421,60 @@ const Insights: React.FC = () => {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-gray-700">{insight.description}</p>
+                  
+                  {/* Anomaly Events */}
+                  {insight.events && insight.events.length > 0 && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <h5 className="text-sm font-medium text-gray-900 mb-2">
+                        Anomaly Events ({insight.anomaly_count})
+                      </h5>
+                      <div className="space-y-2">
+                        {insight.events.slice(0, 5).map((event, eventIdx) => (
+                          <div key={eventIdx} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(event.severity)}`}>
+                                {event.severity}
+                              </span>
+                              <span className="text-gray-600">
+                                {formatTime(event.timestamp)}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-medium text-gray-900">
+                                Value: {event.value}
+                              </span>
+                              <div className="text-gray-500">
+                                Expected: {event.expected_range[0].toFixed(1)} - {event.expected_range[1].toFixed(1)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {insight.events.length > 5 && (
+                          <div className="text-xs text-gray-500 text-center">
+                            +{insight.events.length - 5} more events
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Baseline Statistics */}
+                  {insight.baseline_stats && Object.keys(insight.baseline_stats).length > 0 && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                      <h5 className="text-sm font-medium text-blue-900 mb-2">Baseline Statistics</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        {Object.entries(insight.baseline_stats).map(([key, value]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-blue-700 capitalize">{key}:</span>
+                            <span className="font-medium text-blue-900">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   {insight.recommendations && insight.recommendations.length > 0 && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <p className="text-sm font-medium text-gray-900">Recommendations:</p>
                       <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
                         {insight.recommendations.map((rec, idx) => (
@@ -375,10 +483,14 @@ const Insights: React.FC = () => {
                       </ul>
                     </div>
                   )}
-                  <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                  
+                  <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500">
                     <span>Metric: {insight.metric_type.replace('_', ' ').toUpperCase()}</span>
                     <span>Component: {insight.component}</span>
-                    <span>Time: {formatTime(insight.timestamp)}</span>
+                    <span>Generated: {formatTime(insight.timestamp)}</span>
+                    {insight.period_start && insight.period_end && (
+                      <span>Period: {formatDate(insight.period_start)} - {formatDate(insight.period_end)}</span>
+                    )}
                   </div>
                 </div>
               </div>

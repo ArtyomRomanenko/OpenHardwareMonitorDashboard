@@ -39,6 +39,14 @@ class InsightLevel(str, Enum):
     CRITICAL = "critical"
     SUCCESS = "success"
 
+class AnomalyEvent(BaseModel):
+    """Represents a specific anomaly event with timestamp and value"""
+    timestamp: datetime
+    value: float
+    severity: str  # 'minor', 'moderate', 'severe'
+    description: str
+    expected_range: tuple[float, float]
+
 class HardwareInsight(BaseModel):
     id: str
     title: str
@@ -49,6 +57,12 @@ class HardwareInsight(BaseModel):
     timestamp: datetime
     recommendations: List[str] = []
     data: Dict[str, Any] = {}
+    # New fields for enhanced insights
+    events: List[AnomalyEvent] = []
+    period_start: datetime
+    period_end: datetime
+    anomaly_count: int = 0
+    baseline_stats: Dict[str, float] = {}
 
 class DashboardConfig(BaseModel):
     time_range: TimeRange
@@ -78,3 +92,11 @@ class HealthStatus(BaseModel):
     gpu_health: str
     system_health: str
     alerts: List[HardwareInsight] = []
+
+class AnomalyDetectionConfig(BaseModel):
+    """Configuration for anomaly detection algorithms"""
+    z_score_threshold: float = 2.5  # Standard deviations for outlier detection
+    iqr_multiplier: float = 1.5     # IQR multiplier for outlier detection
+    min_data_points: int = 10       # Minimum points needed for analysis
+    rolling_window_size: int = 20   # Window size for rolling statistics
+    trend_sensitivity: float = 0.1  # Sensitivity for trend detection

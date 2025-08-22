@@ -1,254 +1,261 @@
-# OpenHardwareMonitorDashboard
+# FYI: This is a Cursor written project
+# Open Hardware Monitor Dashboard
 
-A comprehensive dashboard for analyzing Open Hardware Monitor data with intelligent insights and interactive visualizations.
+An interactive dashboard for visualizing PC hardware metrics from Open Hardware Monitor CSV data, providing intelligent insights and trend analysis over various time periods.
 
-## ✨ Features
+## Features
 
-- 📊 **Interactive Time Series Plots**: Visualize CPU, GPU, and system metrics across different time periods
-- 🎨 **Multiple Chart Types**: Line charts, pie charts, scatter plots, and doughnut charts
-- 🧠 **Intelligent Insights**: AI-powered analysis of hardware health and performance with actionable recommendations
-- 📈 **Real-time Monitoring**: Live data updates and historical trend analysis
-- 🎯 **Customizable Dashboards**: Create personalized views for different metrics
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- 🔍 **Advanced Filtering**: Filter by metric types, time ranges, and chart types
-- 🚨 **Health Monitoring**: Real-time system health status with temperature thresholds
-- 💾 **Memory Optimized**: Handles large datasets efficiently with chunked processing
-- 🛡️ **Error Handling**: Comprehensive error handling with retry mechanisms and fallback options
+### 📊 **Dashboard Overview**
+- **Quick Metrics**: Real-time system performance summary
+- **Performance Summary**: Historical data analysis with key statistics
+- **Recent Insights**: Latest hardware health recommendations
+- **System Health**: Overall system status and alerts
 
-## 🛠️ Tech Stack
+### 📈 **Metrics Visualization**
+- **Interactive Charts**: Line charts, scatter plots, and pie charts
+- **Smart Sampling**: Efficient handling of large datasets (up to 500 data points)
+- **Multiple Chart Types**: Support for various visualization styles
+- **Date Range Selection**: Flexible time period analysis (7, 14, 30 days)
 
-- **Frontend**: React + TypeScript + Tailwind CSS
-- **Backend**: Python FastAPI + Uvicorn
-- **Data Processing**: Pandas + NumPy + Scikit-learn
-- **Charts**: Chart.js + React-Chartjs-2
-- **Database**: SQLite (built-in)
-- **Styling**: Tailwind CSS + Custom CSS animations
+### 🧠 **Intelligent Insights Engine**
+- **Anomaly Detection**: Z-score, IQR, and threshold-based detection
+- **Period-Specific Analysis**: Insights only for selected date ranges
+- **Event Tracking**: Detailed anomaly events with timestamps and severity
+- **Baseline Statistics**: Mean, median, standard deviation, quartiles
+- **Hardware Recommendations**: Actionable advice based on data analysis
 
-## 🚀 Quick Start
+### 💾 **Data Processing**
+- **Memory Optimization**: Chunked loading and garbage collection
+- **Large File Support**: Handles CSV files up to 100MB
+- **Smart Parsing**: Dynamic header detection and duplicate column handling
+- **Efficient Storage**: Optimized data structures and caching
+
+## Tech Stack
+
+### Backend
+- **Python 3.11+**: Core runtime
+- **FastAPI**: Modern, fast web framework
+- **Pandas & NumPy**: Data processing and analysis
+- **SciPy**: Statistical analysis and anomaly detection
+- **Pydantic**: Data validation and serialization
+- **SQLite**: Lightweight data storage
+
+### Frontend
+- **React 18**: Modern UI framework
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first CSS framework
+- **Chart.js**: Interactive data visualization
+- **React Router**: Client-side routing
+
+### Testing
+- **Pytest**: Backend testing framework
+- **React Testing Library**: Frontend component testing
+- **Coverage Reports**: Comprehensive test coverage
+- **Mock Testing**: Isolated unit testing
+
+## Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 16+
-- Open Hardware Monitor installed and generating CSV files
+- Python 3.11 or higher
+- Node.js 18+ and npm
+- Open Hardware Monitor installed and generating CSV logs
 
-### 1. Clone and Setup
-```bash
-git clone <repository-url>
-cd OpenHardwareMonitorDashboard
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd OpenHardwareMonitorDashboard
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   python -m venv venv
+   venv\Scripts\activate  # Windows
+   python -m pip install -r requirements.txt
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+4. **Data Preparation**
+   - Place Open Hardware Monitor CSV files in the `data/` directory
+   - Files should follow the format: `OpenHardwareMonitorLog-YYYY-MM-DD.csv`
+
+5. **Start the Application**
+   ```bash
+   # Terminal 1 - Backend
+   cd backend
+   python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+   # Terminal 2 - Frontend
+   cd frontend
+   npm start
+   ```
+
+6. **Access the Dashboard**
+   - Open http://localhost:3000 in your browser
+   - The backend API will be available at http://localhost:8000
+
+## Data Format
+
+Open Hardware Monitor generates CSV files with the following structure:
+```
+Time,CPU Core #1,CPU Core #2,Memory,GPU Core,GPU Memory
+08/20/2025 00:00:03,3.125,6.25,43.7650833,49,1704.13281
+08/20/2025 00:00:08,10.9375,9.375,43.7798424,47,1722.94531
 ```
 
-### 2. Backend Setup
+The system automatically:
+- Detects and parses timestamps
+- Converts numeric values
+- Maps hardware components
+- Handles duplicate columns
+- Processes large datasets efficiently
+
+## Testing
+
+### Backend Tests
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate  # Windows
-# OR source venv/bin/activate  # Linux/Mac
-pip install -r requirements.txt
+python -m pytest tests/ -v
+python -m pytest tests/ --cov=app --cov-report=html
 ```
 
-### 3. Frontend Setup
+### Frontend Tests
 ```bash
-cd ../frontend
-npm install
-```
-
-### 4. Configure Data Source
-Update `backend/app/core/config.py` with your Open Hardware Monitor data directory:
-```python
-data_directory = "E:/Downloads/openhardwaremonitor-v0.9.5/OpenHardwareMonitor"
-```
-
-### 5. Start the Application
-
-#### Option A: Use Batch Files (Windows)
-```bash
-# Start both frontend and backend
-start.bat
-
-# Start backend only
-start-backend-only.bat
-
-# Simple backend start (no virtual environment activation)
-start-backend-simple.bat
-```
-
-#### Option B: Use PowerShell Script
-```bash
-# Right-click start-backend.ps1 → "Run with PowerShell"
-```
-
-#### Option C: Manual Start
-```bash
-# Backend
-cd backend
-venv\Scripts\activate
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Frontend (new terminal)
 cd frontend
-npm start
+npm test
+npm run test:coverage
 ```
 
-### 6. Access Dashboard
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+### Test Coverage
+- **Insights Engine**: 88% success rate (15/17 tests passing)
+- **Data Processor**: 53% success rate (8/15 tests passing)
+- **API Endpoints**: Comprehensive endpoint testing
+- **Frontend Components**: React component testing
 
-## 📊 Data Format
-
-The application expects CSV files from Open Hardware Monitor with the following structure:
-- **File Naming**: `OpenHardwareMonitorLog-YYYY-MM-DD.csv`
-- **Format**: Comma-separated values with hardware metrics
-- **Columns**: Timestamp, CPU cores, GPU metrics, Memory, Disk usage, etc.
-- **Example Structure**:
-  ```
-  Time,CPU Core #1,CPU Core #2,...,GPU Core,GPU Memory,...
-  08/20/2025 00:00:03,3.125,6.25,...,49,1905.00012,...
-  ```
-
-## 🎯 Dashboard Features
-
-### **Main Dashboard**
-- System health overview with color-coded status indicators
-- Key metrics summary (CPU, GPU, Memory, Disk)
-- Recent insights and recommendations
-- Time period selection (7, 14, 30 days)
-
-### **Metrics Page**
-- **Chart Types**: Line, Pie, Scatter, Doughnut
-- **Metric Filtering**: Select specific hardware components
-- **Interactive Charts**: Hover tooltips, zoom, pan
-- **Data Sampling**: Automatic optimization for large datasets
-- **Responsive Design**: Adapts to different screen sizes
-
-### **Insights Page**
-- Hardware health analysis with severity levels
-- Performance recommendations
-- Trend analysis and anomaly detection
-- Filterable insights by metric type and date range
-
-### **System Info Page**
-- Detailed hardware specifications
-- Memory usage statistics
-- GPU information and memory details
-- Disk usage and file counts
-
-## 🔧 Configuration
-
-### Backend Settings (`backend/app/core/config.py`)
-```python
-# Data directory path
-data_directory = "E:/Downloads/openhardwaremonitor-v0.9.5/OpenHardwareMonitor"
-
-# Hardware temperature thresholds
-cpu_temp_warning = 70.0
-cpu_temp_critical = 85.0
-gpu_temp_warning = 75.0
-gpu_temp_critical = 90.0
-
-# Memory optimization
-max_csv_size_mb = 100
-max_rows_per_file = 100000
-chunk_size = 10000
-```
-
-### Frontend Settings
-- API timeout: 60 seconds
-- Chart rendering optimizations
-- Error retry mechanisms
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 OpenHardwareMonitorDashboard/
-├── backend/                 # FastAPI backend
+├── backend/
 │   ├── app/
-│   │   ├── api/            # API endpoints (dashboard, metrics, insights)
-│   │   ├── core/           # Configuration and utilities
-│   │   ├── models/         # Pydantic data models
-│   │   └── services/       # Data processing and insights engine
-│   ├── requirements.txt    # Python dependencies
-│   ├── main.py            # FastAPI application entry point
-│   └── venv/              # Virtual environment
-├── frontend/               # React frontend
+│   │   ├── api/           # FastAPI endpoints
+│   │   ├── core/          # Configuration and settings
+│   │   ├── models/        # Pydantic data models
+│   │   └── services/      # Business logic services
+│   ├── tests/             # Backend test suite
+│   ├── requirements.txt   # Python dependencies
+│   └── main.py           # FastAPI application entry
+├── frontend/
 │   ├── src/
-│   │   ├── components/     # Reusable React components
-│   │   ├── pages/          # Main page components
-│   │   ├── services/       # API communication layer
-│   │   └── utils/          # Utility functions
-│   ├── package.json        # Node.js dependencies
-│   ├── tailwind.config.js  # Tailwind CSS configuration
-│   └── public/             # Static assets
-├── data/                   # CSV data files directory
-├── start.bat               # Start both services (Windows)
-├── start-backend-only.bat  # Start backend only (Windows)
-├── start-backend-simple.bat # Simple backend start (Windows)
-├── start-backend.ps1       # PowerShell backend start
-└── README.md               # This file
+│   │   ├── components/    # React components
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API service layer
+│   │   └── types/         # TypeScript type definitions
+│   ├── tests/             # Frontend test suite
+│   └── package.json       # Node.js dependencies
+├── data/                  # CSV data files
+└── docs/                  # Documentation
 ```
 
-## 🚨 Troubleshooting
+## Configuration
+
+### Backend Settings
+- **Data Directory**: Path to CSV files
+- **Memory Limits**: Configurable file size and row limits
+- **Chunk Size**: Memory-efficient data loading
+- **Hardware Thresholds**: Customizable alert levels
+
+### Frontend Settings
+- **API Timeout**: 60-second request timeout
+- **Chart Sampling**: Smart data point reduction
+- **Theme**: Dark/light mode support
+
+## API Endpoints
+
+### Dashboard
+- `GET /dashboard/overview?days={days}` - Dashboard overview
+- `GET /dashboard/health-status` - System health status
+- `GET /dashboard/trends` - Performance trends
+- `GET /dashboard/performance-summary` - Performance summary
+
+### Insights
+- `GET /insights/analyze` - Period analysis
+- `GET /insights/health-summary` - Health summary
+- `GET /insights/by-metric/{metric}` - Insights by metric
+- `GET /insights/by-level/{level}` - Insights by severity
+
+### Metrics
+- `GET /metrics/period` - Time series data
+- `GET /metrics/system-info` - System information
+- `GET /metrics/available-dates` - Available data dates
+
+## Performance Features
+
+### Memory Optimization
+- **Chunked Loading**: Processes large files in manageable chunks
+- **Garbage Collection**: Automatic memory cleanup
+- **Data Sampling**: Intelligent data point reduction for charts
+- **Efficient Storage**: Optimized data structures
+
+### Large Dataset Handling
+- **File Size Limits**: Configurable maximum file sizes
+- **Row Limits**: Prevents memory overflow
+- **Progress Logging**: Real-time processing feedback
+- **Error Recovery**: Graceful handling of corrupted data
+
+## Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** and add tests
+4. **Run the test suite**: Ensure all tests pass
+5. **Submit a pull request** with detailed description
+
+### Development Guidelines
+- Follow PEP 8 for Python code
+- Use TypeScript strict mode for frontend
+- Write comprehensive tests for new features
+- Update documentation for API changes
+- Maintain test coverage above 80%
+
+## Troubleshooting
 
 ### Common Issues
 
-#### **Permission Denied Errors**
-- **Problem**: `Error: [Errno 13] Permission denied: 'venv\Scripts\python.exe'`
-- **Solution**: Use `start-backend-simple.bat` or `start-backend.ps1`
+**Backend won't start**
+- Check Python version (3.11+ required)
+- Verify virtual environment activation
+- Install dependencies: `python -m pip install -r requirements.txt`
 
-#### **No Data Displayed**
-- **Problem**: Dashboard shows no metrics
-- **Solution**: Check data directory path in `config.py` and ensure CSV files exist
+**Frontend compilation errors**
+- Clear node_modules: `rm -rf node_modules && npm install`
+- Check Node.js version (18+ required)
+- Verify TypeScript configuration
 
-#### **Chart Rendering Errors**
-- **Problem**: "Maximum call stack size exceeded"
-- **Solution**: Large datasets are automatically sampled and optimized
+**No data displayed**
+- Check CSV file format and location
+- Verify file naming convention
+- Check backend logs for parsing errors
 
-#### **API Timeouts**
-- **Problem**: "Request canceled after 10 seconds"
-- **Solution**: Increased to 60 seconds, use smaller time ranges for large datasets
+**Memory issues with large files**
+- Reduce `max_csv_size_mb` in settings
+- Enable chunked loading
+- Monitor system memory usage
 
-### Performance Tips
-- Use 7-14 day ranges for large datasets
-- Enable metric type filtering to reduce chart complexity
-- Charts automatically sample data for optimal performance
-
-## 🔄 Recent Updates
-
-### **v1.2.0** - Enhanced Charts & Performance
-- ✅ Added multiple chart types (Line, Pie, Scatter, Doughnut)
-- ✅ Improved metric filtering and selection
-- ✅ Memory optimization for large datasets
-- ✅ Enhanced error handling and user feedback
-- ✅ Fixed permission issues with startup scripts
-
-### **v1.1.0** - Core Functionality
-- ✅ Basic dashboard with time series visualization
-- ✅ Hardware insights and health monitoring
-- ✅ System information display
-- ✅ API endpoints for data access
-
-### **v1.0.0** - Initial Release
-- ✅ Open Hardware Monitor CSV parsing
-- ✅ FastAPI backend with data processing
-- ✅ React frontend with basic charts
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests if applicable
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- **Open Hardware Monitor** for the excellent hardware monitoring software
-- **FastAPI** for the modern, fast web framework
-- **React** and **Chart.js** for the interactive frontend experience
-- **Pandas** and **NumPy** for powerful data processing capabilities
+- **Open Hardware Monitor**: For providing the data collection software
+- **FastAPI**: For the excellent web framework
+- **React**: For the powerful frontend framework
+- **Chart.js**: For the beautiful data visualizations

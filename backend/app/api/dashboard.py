@@ -31,18 +31,26 @@ async def get_dashboard_overview(
         key_metrics = [MetricType.CPU_TEMP, MetricType.GPU_TEMP, MetricType.CPU_USAGE, MetricType.MEMORY_USAGE]
         metrics_data = data_processor.get_metrics_for_period(start_date_str, end_date_str, key_metrics)
         
-        overview = {}
+        overview = {
+            "metrics": {},
+            "data_points": 0
+        }
+        
+        total_data_points = 0
         for metric_data in metrics_data:
             if not metric_data.values:
                 continue
             values = metric_data.values
-            overview[metric_data.metric_type.value] = {
+            total_data_points += len(values)
+            overview["metrics"][metric_data.metric_type.value] = {
                 "current": round(values[-1], 2) if values else 0,
                 "average": round(sum(values) / len(values), 2) if values else 0,
                 "max": round(max(values), 2) if values else 0,
                 "min": round(min(values), 2) if values else 0,
                 "unit": metric_data.unit
             }
+        
+        overview["data_points"] = total_data_points
         
         # Get health summary
         health_summary = insights_engine.get_health_summary(start_date_str, end_date_str)
@@ -51,11 +59,28 @@ async def get_dashboard_overview(
         insights = insights_engine.analyze_period(start_date_str, end_date_str)
         recent_insights = insights[:5]  # Get first 5 insights
         
+        # Format insights for frontend
+        formatted_insights = []
+        for insight in recent_insights:
+            formatted_insights.append({
+                "id": insight.id,
+                "title": insight.title,
+                "description": insight.description,
+                "level": insight.level.value,
+                "metric_type": insight.metric_type.value,
+                "component": insight.component,
+                "timestamp": insight.timestamp.isoformat() if hasattr(insight.timestamp, 'isoformat') else str(insight.timestamp),
+                "recommendations": insight.recommendations
+            })
+        
         return {
             "system_info": system_info,
             "overview": overview,
             "health_summary": health_summary,
-            "recent_insights": recent_insights,
+            "recent_insights": {
+                "insights": formatted_insights,
+                "total_insights": len(formatted_insights)
+            },
             "period": {"start_date": start_date_str, "end_date": end_date_str, "days": days}
         }
         
@@ -278,6 +303,36 @@ def _calculate_overall_rating(performance_summary):
         return "fair"
     else:
         return "poor"
+
+@router.get("/test-insights")
+async def test_insights():
+    """Test endpoint to debug insights generation"""
+    try:
+        # Test with a simple date range
+        start_date = "2024-01-01"
+        end_date = "2024-01-02"
+        
+        print(f"Testing insights generation for {start_date} to {end_date}")
+        
+        # Get metrics data
+        key_metrics = [MetricType.CPU_TEMP, MetricType.GPU_TEMP, MetricType.CPU_USAGE, MetricType.MEMORY_USAGE]
+        metrics_data = data_processor.get_metrics_for_period(start_date, end_date, key_metrics)
+        print(f"Got {len(metrics_data)} metrics from data processor")
+        
+        # Generate insights
+        insights = insights_engine.analyze_period(start_date, end_date)
+        print(f"Generated {len(insights)} insights")
+        
+        return {
+            "test_period": {"start_date": start_date, "end_date": end_date},
+            "metrics_count": len(metrics_data),
+            "insights_count": len(insights),
+            "insights": [insight.dict() for insight in insights] if insights else []
+        }
+        
+    except Exception as e:
+        print(f"Error in test insights: {e}")
+        return {"error": str(e)}
 
 @router.get("/config")
 async def get_dashboard_config():

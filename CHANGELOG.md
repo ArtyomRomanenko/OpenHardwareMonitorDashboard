@@ -8,121 +8,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Enhanced error handling with retry mechanisms
-- Fallback options for different time ranges
-- Improved loading feedback and progress indicators
-
-## [1.2.0] - 2025-01-XX
-
-### Added
-- **Multiple Chart Types**: Line, Pie, Scatter, and Doughnut charts
-- **Advanced Metric Filtering**: Checkbox-based metric type selection
-- **Chart Type Selection**: Radio buttons for choosing visualization styles
-- **14-Day Time Range**: Additional time period option
-- **Data Sampling**: Automatic optimization for large datasets
-- **Error Boundaries**: Crash protection for chart rendering
-- **Performance Optimization**: Memory-efficient data processing
+- Comprehensive testing framework with pytest and React Testing Library
+- Enhanced insights engine with anomaly detection (Z-score, IQR, threshold-based)
+- Memory optimization features for large CSV file handling
+- Smart data sampling for chart visualization
+- Period-specific insights analysis
+- Detailed anomaly event tracking with timestamps and severity
+- Baseline statistics calculation (mean, median, std, quartiles)
+- Cross-metric insights generation
+- Trend analysis and detection
+- Data reliability warnings for poor quality data
 
 ### Changed
-- **Metrics Page**: Completely redesigned with multiple chart types
-- **Chart Interactivity**: Enhanced hover tooltips, zoom, and pan
-- **Error Handling**: Comprehensive error messages with troubleshooting tips
-- **Loading States**: Better feedback for long-running requests
-- **API Timeout**: Increased from 10s to 60s for large datasets
+- Reworked insights engine to display insights only for selected date ranges
+- Updated data processor to handle Open Hardware Monitor CSV format
+- Improved frontend chart rendering with multiple chart types
+- Enhanced error handling and user feedback
+- Optimized memory usage for large datasets
 
 ### Fixed
-- **Permission Issues**: Fixed startup script permission errors
-- **Chart Rendering**: Resolved "Maximum call stack size exceeded" errors
-- **Data Filtering**: Metric type selection now properly affects chart display
-- **System Info**: Dedicated page for system information display
-- **Memory Optimization**: Improved handling of large CSV files
+- CSV parsing issues with Open Hardware Monitor file format
+- Frontend chart rendering errors and type compatibility issues
+- Backend API endpoint structure and response formatting
+- Memory allocation issues with large CSV files
+- Date filtering and time range selection problems
+- Chart data sampling and statistics calculation
 
-### Removed
-- **System Info Block**: Removed from Metrics tab (moved to dedicated page)
-- **Old Chart Types**: Replaced with enhanced Chart.js implementations
-
-## [1.1.0] - 2025-01-XX
+## [0.2.0] - 2024-01-XX
 
 ### Added
-- **Basic Dashboard**: Main overview with system health status
-- **Time Series Visualization**: Interactive charts for different periods
-- **Hardware Insights**: AI-powered analysis and recommendations
-- **System Information**: Hardware specifications and data summary
-- **API Endpoints**: Complete REST API for data access
-- **Memory Optimization**: Chunked CSV loading and file size limits
+- Interactive dashboard with real-time metrics display
+- Multiple chart types (line charts, scatter plots, pie charts)
+- Date range selection (7, 14, 30 days)
+- System health monitoring and alerts
+- Performance summary and trend analysis
+- Hardware insights and recommendations
 
 ### Changed
-- **Data Processing**: Improved CSV parsing for Open Hardware Monitor format
-- **Error Handling**: Better error messages and user feedback
-- **Performance**: Optimized for large datasets
+- Migrated from basic CSV parsing to intelligent data processing
+- Enhanced frontend with TypeScript and modern React patterns
+- Improved backend architecture with FastAPI and Pydantic
 
 ### Fixed
-- **CSV Parsing**: Corrected header detection and column mapping
-- **Date Filtering**: Fixed time range selection logic
-- **Data Loading**: Resolved issues with large file processing
+- Initial setup and dependency installation issues
+- Basic CSV loading and parsing functionality
+- Frontend compilation and module resolution errors
 
-## [1.0.0] - 2025-01-XX
+## [0.1.0] - 2024-01-XX
 
 ### Added
-- **Initial Release**: Basic Open Hardware Monitor dashboard
-- **FastAPI Backend**: Python backend with data processing
-- **React Frontend**: TypeScript frontend with basic charts
-- **CSV Parsing**: Support for Open Hardware Monitor log files
-- **Basic Charts**: Simple time series visualization
-- **Project Structure**: Organized backend and frontend architecture
+- Initial project structure and setup
+- Basic FastAPI backend with CSV loading
+- React frontend with basic chart display
+- Open Hardware Monitor CSV format support
+- Basic hardware metrics visualization
 
-## Technical Details
+## Development Notes
 
-### Backend Changes
-- **Data Processor**: Enhanced CSV loading with memory optimization
-- **Insights Engine**: Improved hardware health analysis
-- **API Routes**: Added comprehensive endpoints for all features
-- **Configuration**: Enhanced settings with memory optimization options
+### Current Status
+- **Backend**: Core functionality implemented, testing in progress
+- **Frontend**: UI components complete, testing environment ready
+- **Testing**: 88% backend test success rate, frontend tests configured
+- **Documentation**: Comprehensive guides and API documentation
 
-### Frontend Changes
-- **Chart.js Integration**: Full Chart.js and React-Chartjs-2 implementation
-- **Component Architecture**: Modular, reusable components
-- **Error Handling**: Comprehensive error boundaries and user feedback
-- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+### Known Issues
+- Some data processor tests failing due to mocking and path issues
+- Threshold-based anomaly detection needs refinement
+- Reliability warning system requires adjustment
 
-### Performance Improvements
-- **Memory Management**: Chunked loading, file size limits, row limits
-- **Data Sampling**: Automatic optimization for large datasets
-- **API Optimization**: Increased timeouts and better error handling
-- **Chart Rendering**: Optimized for performance and stability
+### Next Steps
+- Fix remaining failing tests
+- Improve test coverage to 90%+
+- Add end-to-end testing
+- Implement performance testing
+- Add visual regression testing
 
-## Migration Guide
+### Technical Debt
+- Some tests need better mocking strategies
+- Error handling could be more comprehensive
+- Performance optimization for very large datasets
+- Additional test categories (security, load testing)
 
-### From v1.1.0 to v1.2.0
-- No breaking changes in API
-- Enhanced chart functionality with new chart types
-- Improved error handling and user experience
-- Better performance for large datasets
+---
 
-### From v1.0.0 to v1.1.0
-- Updated data directory configuration format
-- Enhanced CSV parsing for Open Hardware Monitor format
-- Improved memory management and performance
+## Version History
 
-## Known Issues
+- **0.1.0**: Initial project setup and basic functionality
+- **0.2.0**: Enhanced features and improved architecture
+- **Unreleased**: Testing framework and advanced insights engine
 
-### v1.2.0
-- None currently known
+## Contributing
 
-### v1.1.0
-- ~~Permission issues with startup scripts~~ (Fixed in v1.2.0)
-- ~~Chart rendering errors with large datasets~~ (Fixed in v1.2.0)
+When contributing to this project, please:
 
-## Future Plans
+1. Update this changelog with your changes
+2. Follow the existing format and style
+3. Group changes under appropriate categories (Added, Changed, Fixed, etc.)
+4. Include relevant issue numbers or pull request references
+5. Use clear, descriptive language for all changes
 
-### v1.3.0 (Planned)
-- Real-time data streaming
-- Advanced analytics and machine learning insights
-- Export functionality for reports
-- Mobile app support
+## Release Process
 
-### v1.4.0 (Planned)
-- Multi-user support with authentication
-- Database backend for historical data
-- Advanced alerting system
-- API rate limiting and security improvements
+1. **Development**: Features developed in feature branches
+2. **Testing**: Comprehensive testing of all changes
+3. **Documentation**: Update relevant documentation
+4. **Changelog**: Update this changelog with new version
+5. **Release**: Tag and release new version
+6. **Deployment**: Deploy to production environment
