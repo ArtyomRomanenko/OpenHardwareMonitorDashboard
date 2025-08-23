@@ -16,6 +16,7 @@ An interactive dashboard for visualizing PC hardware metrics from Open Hardware 
 - **Smart Sampling**: Efficient handling of large datasets (up to 500 data points)
 - **Multiple Chart Types**: Support for various visualization styles
 - **Date Range Selection**: Flexible time period analysis (7, 14, 30 days)
+- **Dark/Light Mode**: Toggle between themes with automatic preference saving
 
 ### 🧠 **Intelligent Insights Engine**
 - **Anomaly Detection**: Z-score, IQR, and threshold-based detection
@@ -175,7 +176,7 @@ OpenHardwareMonitorDashboard/
 ### Frontend Settings
 - **API Timeout**: 60-second request timeout
 - **Chart Sampling**: Smart data point reduction
-- **Theme**: Dark/light mode support
+- **Theme**: Dark/light mode support with automatic preference saving
 
 ## API Endpoints
 

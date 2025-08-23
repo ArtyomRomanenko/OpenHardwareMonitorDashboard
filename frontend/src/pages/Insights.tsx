@@ -223,10 +223,10 @@ const Insights: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'severe': return 'bg-red-100 text-red-800';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800';
-      case 'minor': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'severe': return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200';
+      case 'moderate': return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200';
+      case 'minor': return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -241,14 +241,14 @@ const Insights: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hardware Insights</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hardware Insights</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Intelligent analysis and recommendations for your hardware with anomaly detection
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -256,8 +256,8 @@ const Insights: React.FC = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -265,23 +265,23 @@ const Insights: React.FC = () => {
 
       {/* System Information */}
       {systemInfo && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">System Overview</h3>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900">CPU</h4>
-              <p className="text-blue-700">{systemInfo.cpu_model}</p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 dark:text-blue-200">CPU</h4>
+              <p className="text-blue-700 dark:text-blue-300">{systemInfo.cpu_model}</p>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h4 className="font-medium text-purple-900">GPU</h4>
-              <p className="text-purple-700">{systemInfo.gpu_model}</p>
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-900 dark:text-purple-200">GPU</h4>
+              <p className="text-purple-700 dark:text-purple-300">{systemInfo.gpu_model}</p>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-medium text-green-900">Memory</h4>
-              <p className="text-green-700">{systemInfo.total_memory}</p>
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-green-900 dark:text-green-200">Memory</h4>
+              <p className="text-green-700 dark:text-green-300">{systemInfo.total_memory}</p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500">
+          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
             Last updated: {formatDate(systemInfo.last_update)}
           </div>
         </div>
@@ -289,47 +289,47 @@ const Insights: React.FC = () => {
 
       {/* Health Summary */}
       {healthSummary && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">System Health Summary</h3>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Health Summary</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{healthSummary.overall_health}</div>
-              <div className="text-sm text-gray-500">Overall Status</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{healthSummary.overall_health}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Overall Status</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{healthSummary.critical_issues}</div>
-              <div className="text-sm text-gray-500">Critical Issues</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{healthSummary.critical_issues}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Critical Issues</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{healthSummary.warnings}</div>
-              <div className="text-sm text-gray-500">Warnings</div>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{healthSummary.warnings}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Warnings</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{healthSummary.recommendations}</div>
-              <div className="text-sm text-gray-500">Recommendations</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{healthSummary.recommendations}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Recommendations</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{healthSummary.total_anomalies || 0}</div>
-              <div className="text-sm text-gray-500">Anomalies</div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{healthSummary.total_anomalies || 0}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Anomalies</div>
             </div>
           </div>
           {healthSummary.insight_counts && (
             <div className="mt-4">
-              <h4 className="font-medium text-gray-900 mb-2">Insight Breakdown</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Insight Breakdown</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                 {Object.entries(healthSummary.insight_counts).map(([level, count]) => (
                   <div key={level} className="flex justify-between">
-                    <span className="capitalize">{level}:</span>
-                    <span className="font-medium">{count}</span>
+                    <span className="capitalize text-gray-700 dark:text-gray-300">{level}:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{count}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
           {healthSummary.period && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Analysis Period</h4>
-              <div className="text-sm text-gray-600">
+            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Analysis Period</h4>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {formatDate(healthSummary.period.start_date)} to {formatDate(healthSummary.period.end_date)}
               </div>
             </div>
@@ -338,15 +338,15 @@ const Insights: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Filter Insights</h3>
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Filter Insights</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Insight Level</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Insight Level</label>
             <select
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {insightLevels.map(level => (
                 <option key={level.value} value={level.value}>{level.label}</option>
@@ -354,11 +354,11 @@ const Insights: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Metric Type</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Metric Type</label>
             <select
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {metricTypes.map(metric => (
                 <option key={metric.value} value={metric.value}>{metric.label}</option>
@@ -366,21 +366,21 @@ const Insights: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date</label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -404,28 +404,28 @@ const Insights: React.FC = () => {
 
       {!loadingInsights && insights.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Hardware Insights ({insights.length})</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Hardware Insights ({insights.length})</h3>
           {insights.map((insight, index) => (
-            <div key={index} className={`bg-white shadow rounded-lg p-6 border-l-4 ${getLevelColor(insight.level)}`}>
+            <div key={index} className={`bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 ${getLevelColor(insight.level)}`}>
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-0.5">
                   {getLevelIcon(insight.level)}
                 </div>
                 <div className="ml-3 flex-1">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                       {insight.title}
                     </h4>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(insight.level)}`}>
                       {insight.level}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-gray-700">{insight.description}</p>
+                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{insight.description}</p>
                   
                   {/* Anomaly Events */}
                   {insight.events && insight.events.length > 0 && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <h5 className="text-sm font-medium text-gray-900 mb-2">
+                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                         Anomaly Events ({insight.anomaly_count})
                       </h5>
                       <div className="space-y-2">
@@ -435,22 +435,22 @@ const Insights: React.FC = () => {
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(event.severity)}`}>
                                 {event.severity}
                               </span>
-                              <span className="text-gray-600">
+                              <span className="text-gray-600 dark:text-gray-400">
                                 {formatTime(event.timestamp)}
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className="font-medium text-gray-900">
+                              <span className="font-medium text-gray-900 dark:text-white">
                                 Value: {event.value}
                               </span>
-                              <div className="text-gray-500">
+                              <div className="text-gray-500 dark:text-gray-400">
                                 Expected: {event.expected_range[0].toFixed(1)} - {event.expected_range[1].toFixed(1)}
                               </div>
                             </div>
                           </div>
                         ))}
                         {insight.events.length > 5 && (
-                          <div className="text-xs text-gray-500 text-center">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
                             +{insight.events.length - 5} more events
                           </div>
                         )}
@@ -460,13 +460,13 @@ const Insights: React.FC = () => {
                   
                   {/* Baseline Statistics */}
                   {insight.baseline_stats && Object.keys(insight.baseline_stats).length > 0 && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                      <h5 className="text-sm font-medium text-blue-900 mb-2">Baseline Statistics</h5>
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <h5 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Baseline Statistics</h5>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                         {Object.entries(insight.baseline_stats).map(([key, value]) => (
                           <div key={key} className="flex justify-between">
-                            <span className="text-blue-700 capitalize">{key}:</span>
-                            <span className="font-medium text-blue-900">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+                            <span className="text-blue-700 dark:text-blue-300 capitalize">{key}:</span>
+                            <span className="font-medium text-blue-900 dark:text-blue-200">{typeof value === 'number' ? value.toFixed(2) : value}</span>
                           </div>
                         ))}
                       </div>
@@ -475,8 +475,8 @@ const Insights: React.FC = () => {
                   
                   {insight.recommendations && insight.recommendations.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-sm font-medium text-gray-900">Recommendations:</p>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Recommendations:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
                         {insight.recommendations.map((rec, idx) => (
                           <li key={idx}>{rec}</li>
                         ))}
@@ -484,7 +484,7 @@ const Insights: React.FC = () => {
                     </div>
                   )}
                   
-                  <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500">
+                  <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                     <span>Metric: {insight.metric_type.replace('_', ' ').toUpperCase()}</span>
                     <span>Component: {insight.component}</span>
                     <span>Generated: {formatTime(insight.timestamp)}</span>
@@ -500,10 +500,10 @@ const Insights: React.FC = () => {
       )}
 
       {!loadingInsights && insights.length === 0 && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Insights Found</h3>
-            <p className="text-gray-500">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Insights Found</h3>
+            <p className="text-gray-500 dark:text-gray-400">
               No insights data found for the selected filters. Try adjusting your filter criteria or check if the backend is running.
             </p>
           </div>

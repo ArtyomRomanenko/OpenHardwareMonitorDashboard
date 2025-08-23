@@ -509,29 +509,29 @@ const Metrics: React.FC = () => {
        const isLargeDataset = metric.values.length > 1000;
       
       return (
-        <div key={index} className="bg-white shadow rounded-lg p-6">
+        <div key={index} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 {metricType?.label || metric.metric_type || 'Unknown Metric'}
               </h3>
-                             <p className="text-sm text-gray-500">
+                             <p className="text-sm text-gray-500 dark:text-gray-400">
                  {metric.component || 'Unknown'} • {metric.unit || ''} • {chartData.values.length.toLocaleString()} displayed / {metric.values.length.toLocaleString()} total data points
                  {isLargeDataset && (
-                   <span className="ml-2 text-yellow-600 font-medium">
+                   <span className="ml-2 text-yellow-600 dark:text-yellow-400 font-medium">
                      (Large dataset - chart shows full time range with smart sampling)
                    </span>
                  )}
                </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats.avg.toFixed(1)}{metric.unit || ''}
               </div>
-                             <div className="text-sm text-gray-500">
+                             <div className="text-sm text-gray-500 dark:text-gray-400">
                  Min: {stats.min.toFixed(1)} | Max: {stats.max.toFixed(1)}
                  {isLargeDataset && (
-                   <span className="block text-xs text-yellow-600">
+                   <span className="block text-xs text-yellow-600 dark:text-yellow-400">
                      (based on sampled data)
                    </span>
                  )}
@@ -540,7 +540,7 @@ const Metrics: React.FC = () => {
           </div>
 
           {/* Enhanced Chart Visualization */}
-          <div className="h-64 bg-gray-50 rounded-lg p-4 overflow-hidden">
+          <div className="h-64 bg-gray-50 dark:bg-gray-700 rounded-lg p-4 overflow-hidden">
             {(() => {
               const chartData = getChartData(metric, selectedChartType);
               const chartOptions = getChartOptions(selectedChartType, metric);
@@ -588,18 +588,18 @@ const Metrics: React.FC = () => {
 
                      {/* Data Table */}
            <div className="mt-4">
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                  Recent Data Points {isLargeDataset && `(showing first 10 of ${chartData.values.length.toLocaleString()} sampled from ${metric.values.length.toLocaleString()} total)`}
                </h4>
              <div className="max-h-40 overflow-y-auto">
-               <table className="min-w-full divide-y divide-gray-200">
-                 <thead className="bg-gray-50">
+               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                 <thead className="bg-gray-50 dark:bg-gray-700">
                    <tr>
-                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time</th>
+                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
                    </tr>
                  </thead>
-                 <tbody className="bg-white divide-y divide-gray-200">
+                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                    {(() => {
                      // Get sampled data for the table to match the chart
                      const chartData = getSafeChartData(metric.values, 500);
@@ -632,10 +632,10 @@ const Metrics: React.FC = () => {
                        
                        return (
                          <tr key={tableIdx}>
-                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                              {timeDisplay}
                            </td>
-                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                              {typeof value === 'number' ? value.toFixed(2) : String(value)}{metric.unit || ''}
                            </td>
                          </tr>
@@ -651,9 +651,9 @@ const Metrics: React.FC = () => {
     } catch (error) {
       console.error('Error rendering metric card:', error);
       return (
-        <div key={index} className="bg-red-50 border border-red-200 rounded-md p-6">
-          <h3 className="text-lg font-medium text-red-800">Error Rendering Metric</h3>
-          <p className="text-red-700">Failed to render metric data. Check console for details.</p>
+        <div key={index} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md p-6">
+          <h3 className="text-lg font-medium text-red-800 dark:text-red-200">Error Rendering Metric</h3>
+          <p className="text-red-700 dark:text-red-300">Failed to render metric data. Check console for details.</p>
         </div>
       );
     }
@@ -670,14 +670,14 @@ const Metrics: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hardware Metrics</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hardware Metrics</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Detailed hardware metrics and time series analysis
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -685,8 +685,8 @@ const Metrics: React.FC = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -694,15 +694,15 @@ const Metrics: React.FC = () => {
 
       {/* Date Selection */}
       {availableDates && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Date Range</h3>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Date Range</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
               <select
                 value={selectedStartDate}
                 onChange={(e) => setSelectedStartDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select start date</option>
                 {availableDates.dates.map(date => (
@@ -711,11 +711,11 @@ const Metrics: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date</label>
               <select
                 value={selectedEndDate}
                 onChange={(e) => setSelectedEndDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select end date</option>
                 {availableDates.dates.map(date => (
@@ -733,15 +733,15 @@ const Metrics: React.FC = () => {
               </button>
             </div>
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Available: {availableDates.count} dates from {formatDate(availableDates.date_range.start)} to {formatDate(availableDates.date_range.end)}
           </p>
         </div>
       )}
 
       {/* Chart Type Selection */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Chart Type</h3>
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Chart Type</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { value: 'line', label: 'Line Chart', icon: '📈', description: 'Time series trends' },
@@ -749,7 +749,7 @@ const Metrics: React.FC = () => {
             { value: 'pie', label: 'Pie Chart', icon: '🥧', description: 'Value range distribution' },
             { value: 'doughnut', label: 'Doughnut Chart', icon: '🍩', description: 'Min/Avg/Max summary' }
           ].map(chartType => (
-            <label key={chartType.value} className="flex flex-col items-center space-y-2 cursor-pointer p-3 border-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <label key={chartType.value} className="flex flex-col items-center space-y-2 cursor-pointer p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <input
                 type="radio"
                 name="chartType"
@@ -762,27 +762,27 @@ const Metrics: React.FC = () => {
                 {chartType.icon}
               </div>
               <div className="text-center">
-                <div className={`font-medium text-sm ${selectedChartType === chartType.value ? 'text-blue-600' : 'text-gray-700'}`}>
+                <div className={`font-medium text-sm ${selectedChartType === chartType.value ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                   {chartType.label}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {chartType.description}
                 </div>
               </div>
               {selectedChartType === chartType.value && (
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
               )}
             </label>
           ))}
         </div>
-        <p className="mt-3 text-sm text-gray-500 text-center">
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 text-center">
           Select a chart type to visualize your metrics data. Each chart type offers different insights into your hardware performance.
         </p>
       </div>
 
       {/* Metric Type Selection */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Metric Types</h3>
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Metric Types</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {metricTypes.map(metric => (
             <label key={metric.value} className="flex items-center space-x-2 cursor-pointer">
@@ -790,30 +790,30 @@ const Metrics: React.FC = () => {
                 type="checkbox"
                 checked={selectedMetricTypes.length === 0 || selectedMetricTypes.includes(metric.value)}
                 onChange={() => handleMetricTypeToggle(metric.value)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
               />
-              <span className={`text-sm ${selectedMetricTypes.length > 0 && !selectedMetricTypes.includes(metric.value) ? 'text-gray-400' : 'text-gray-700'}`}>
+              <span className={`text-sm ${selectedMetricTypes.length > 0 && !selectedMetricTypes.includes(metric.value) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
                 {metric.label}
               </span>
             </label>
           ))}
         </div>
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {selectedMetricTypes.length === 0 ? 'All metric types selected' : `${selectedMetricTypes.length} metric types selected`}
           </p>
           {selectedMetricTypes.length > 0 && (
             <button
               onClick={() => setSelectedMetricTypes([])}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
             >
               Show All Types
             </button>
           )}
         </div>
         {selectedMetricTypes.length > 0 && (
-          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-700">
+          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-md">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
               <strong>Filtering Active:</strong> Only showing {selectedMetricTypes.join(', ')} metrics. 
               Data will reload automatically when you change the selection.
             </p>
@@ -832,7 +832,7 @@ const Metrics: React.FC = () => {
         <div className="space-y-6">
           {/* Large Dataset Warning */}
           {metricsData.some(metric => metric.values.length > 1000) && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -840,8 +840,8 @@ const Metrics: React.FC = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">Large Dataset Detected</h3>
-                                     <p className="mt-1 text-sm text-yellow-700">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Large Dataset Detected</h3>
+                                     <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                      Some metrics contain large amounts of data. Charts are automatically sampled to prevent performance issues while preserving the full time range. 
                      Statistics and charts show sampled data, full data is available in the data table below.
                    </p>
@@ -855,10 +855,10 @@ const Metrics: React.FC = () => {
       )}
 
       {!loadingMetrics && metricsData.length === 0 && selectedStartDate && selectedEndDate && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Metrics Data</h3>
-            <p className="text-gray-500">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Metrics Data</h3>
+            <p className="text-gray-500 dark:text-gray-400">
               No metrics data found for the selected date range. Try selecting different dates or check if the backend is running.
             </p>
           </div>
