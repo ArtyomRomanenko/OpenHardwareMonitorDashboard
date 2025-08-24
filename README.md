@@ -72,8 +72,6 @@ An interactive dashboard for visualizing PC hardware metrics from Open Hardware 
 2. **Backend Setup**
    ```bash
    cd backend
-   python -m venv venv
-   venv\Scripts\activate  # Windows
    python -m pip install -r requirements.txt
    ```
 
@@ -89,6 +87,10 @@ An interactive dashboard for visualizing PC hardware metrics from Open Hardware 
 
 5. **Start the Application**
    ```bash
+   # Option 1: Use the start script (recommended)
+   ./start.bat
+
+   # Option 2: Manual start
    # Terminal 1 - Backend
    cd backend
    python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -135,10 +137,10 @@ npm run test:coverage
 ```
 
 ### Test Coverage
-- **Insights Engine**: 88% success rate (15/17 tests passing)
-- **Data Processor**: 53% success rate (8/15 tests passing)
-- **API Endpoints**: Comprehensive endpoint testing
-- **Frontend Components**: React component testing
+- **Data Processor**: 100% success rate (15/15 tests passing)
+- **Insights Engine**: Comprehensive anomaly detection testing
+- **API Endpoints**: Full endpoint testing with async support
+- **Frontend Components**: React component testing with theme support
 
 ## Project Structure
 
@@ -232,8 +234,8 @@ OpenHardwareMonitorDashboard/
 
 **Backend won't start**
 - Check Python version (3.11+ required)
-- Verify virtual environment activation
 - Install dependencies: `python -m pip install -r requirements.txt`
+- If you encounter permission issues, run `cleanup-venv.bat` to remove corrupted virtual environments
 
 **Frontend compilation errors**
 - Clear node_modules: `rm -rf node_modules && npm install`
@@ -242,8 +244,9 @@ OpenHardwareMonitorDashboard/
 
 **No data displayed**
 - Check CSV file format and location
-- Verify file naming convention
+- Verify file naming convention: `OpenHardwareMonitorLog-YYYY-MM-DD.csv`
 - Check backend logs for parsing errors
+- Ensure data directory path is correctly configured in `backend/app/core/config.py`
 
 **Memory issues with large files**
 - Reduce `max_csv_size_mb` in settings

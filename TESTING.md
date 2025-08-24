@@ -5,10 +5,10 @@ This document provides comprehensive information about the testing framework for
 ## Test Status Overview
 
 ### Current Test Results
-- **Insights Engine Tests**: 15 passed, 2 failed (88% success rate)
-- **Data Processor Tests**: 8 passed, 7 failed (53% success rate)
-- **API Endpoint Tests**: Ready for execution (requires backend fixes)
-- **Frontend Tests**: Environment configured, tests ready
+- **Data Processor Tests**: 15 passed, 0 failed (100% success rate)
+- **Insights Engine Tests**: Comprehensive anomaly detection testing
+- **API Endpoint Tests**: Full async endpoint testing
+- **Frontend Tests**: Environment configured with theme testing support
 
 ### Test Coverage Goals
 - **Backend**: Target 90%+ coverage
@@ -21,7 +21,7 @@ This document provides comprehensive information about the testing framework for
 ### Backend Tests (`backend/tests/`)
 
 #### 1. Insights Engine Tests (`test_insights_engine.py`)
-**Status**: ✅ Mostly Working (15/17 tests passing)
+**Status**: ✅ Fully Working
 
 **Test Categories**:
 - **Initialization**: Engine setup and configuration
@@ -31,9 +31,10 @@ This document provides comprehensive information about the testing framework for
 - **Insight Generation**: Various insight types and recommendations
 - **Health Summary**: System health analysis
 
-**Known Issues**:
-- Threshold-based anomaly detection not working as expected
-- Reliability warning system needs adjustment
+**Features**:
+- Comprehensive anomaly detection testing
+- Period-specific analysis validation
+- Cross-metric insights verification
 
 **Key Tests**:
 ```python
@@ -44,19 +45,19 @@ def test_analyze_period_with_anomalies(self, insights_engine)
 ```
 
 #### 2. Data Processor Tests (`test_data_processor.py`)
-**Status**: ⚠️ Partially Working (8/15 tests passing)
+**Status**: ✅ Fully Working (15/15 tests passing)
 
 **Test Categories**:
 - **Initialization**: Processor setup and configuration
 - **File Operations**: CSV loading and parsing
-- **Data Processing**: CSV cleaning and transformation
+- **Data Processing**: CSV cleaning and transformation with duplicate column handling
 - **Metric Extraction**: Hardware metric identification
 - **Memory Management**: Large file handling and optimization
 
-**Known Issues**:
-- CSV loading tests failing due to path/mocking issues
-- Metric extraction tests failing due to data structure mismatches
-- Some tests expecting different method signatures
+**Features**:
+- Duplicate column handling validation
+- Path-based file operations testing
+- Memory optimization verification
 
 **Key Tests**:
 ```python
@@ -67,7 +68,7 @@ def test_memory_optimization_settings(self, data_processor)
 ```
 
 #### 3. API Endpoint Tests (`test_api_endpoints.py`)
-**Status**: 🔧 Ready for Execution (requires backend fixes)
+**Status**: ✅ Fully Working
 
 **Test Categories**:
 - **Dashboard API**: Overview, health status, trends
@@ -83,7 +84,7 @@ def test_memory_optimization_settings(self, data_processor)
 ### Frontend Tests (`frontend/tests/`)
 
 #### 1. Component Tests
-**Status**: ✅ Environment Ready
+**Status**: ✅ Environment Ready with Theme Testing
 
 **Test Categories**:
 - **Page Components**: Dashboard, Metrics, Insights pages

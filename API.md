@@ -629,6 +629,22 @@ For API support and questions:
 4. Check the backend logs for detailed error information
 5. Create an issue with detailed error information and request details
 
+## Recent Improvements
+
+### Version 0.3.0 (2025-08-23)
+- **Enhanced Data Processing**: Improved CSV parsing with duplicate column handling
+- **Memory Optimization**: Better handling of large datasets with chunked loading
+- **Anomaly Detection**: Advanced Z-score, IQR, and threshold-based detection
+- **Period-Specific Analysis**: Insights generated only for selected date ranges
+- **Event Tracking**: Detailed anomaly events with timestamps and severity levels
+- **Baseline Statistics**: Comprehensive statistical analysis (mean, median, std, quartiles)
+
+### Performance Enhancements
+- **Smart Sampling**: Efficient data point reduction for chart visualization
+- **Garbage Collection**: Automatic memory cleanup during processing
+- **Error Recovery**: Graceful handling of corrupted or malformed data
+- **Progress Logging**: Real-time processing feedback for large files
+
 ## Versioning
 
 The API follows semantic versioning. The current version is v1.0.0.

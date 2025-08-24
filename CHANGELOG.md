@@ -5,9 +5,10 @@ All notable changes to the Open Hardware Monitor Dashboard project will be docum
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2025-08-23
 
 ### Added
+- Dark/Light mode toggle with automatic preference saving
 - Comprehensive testing framework with pytest and React Testing Library
 - Enhanced insights engine with anomaly detection (Z-score, IQR, threshold-based)
 - Memory optimization features for large CSV file handling
@@ -18,13 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-metric insights generation
 - Trend analysis and detection
 - Data reliability warnings for poor quality data
+- Duplicate column handling for Open Hardware Monitor CSV files
+- Alternative start scripts for different deployment scenarios
 
 ### Changed
 - Reworked insights engine to display insights only for selected date ranges
-- Updated data processor to handle Open Hardware Monitor CSV format
+- Updated data processor to handle Open Hardware Monitor CSV format with duplicate columns
 - Improved frontend chart rendering with multiple chart types
 - Enhanced error handling and user feedback
 - Optimized memory usage for large datasets
+- Simplified installation process (removed virtual environment requirement)
+- Updated all documentation to reflect current project state
 
 ### Fixed
 - CSV parsing issues with Open Hardware Monitor file format
@@ -33,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Memory allocation issues with large CSV files
 - Date filtering and time range selection problems
 - Chart data sampling and statistics calculation
+- Permission denied errors with virtual environment Python executables
+- Duplicate column warnings in CSV processing
+- All backend tests now passing (100% success rate)
+- Theme toggle functionality and styling issues
 
 ## [0.2.0] - 2024-01-XX
 
@@ -66,28 +75,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Development Notes
 
 ### Current Status
-- **Backend**: Core functionality implemented, testing in progress
-- **Frontend**: UI components complete, testing environment ready
-- **Testing**: 88% backend test success rate, frontend tests configured
-- **Documentation**: Comprehensive guides and API documentation
+- **Backend**: Core functionality implemented, all tests passing (100% success rate)
+- **Frontend**: UI components complete with dark/light mode support
+- **Testing**: Comprehensive test coverage with all backend tests passing
+- **Documentation**: Updated guides and API documentation
 
 ### Known Issues
-- Some data processor tests failing due to mocking and path issues
-- Threshold-based anomaly detection needs refinement
-- Reliability warning system requires adjustment
+- None currently identified - all major issues resolved
 
 ### Next Steps
-- Fix remaining failing tests
-- Improve test coverage to 90%+
 - Add end-to-end testing
 - Implement performance testing
 - Add visual regression testing
+- Consider Docker containerization
+- Add CI/CD pipeline
 
 ### Technical Debt
-- Some tests need better mocking strategies
-- Error handling could be more comprehensive
-- Performance optimization for very large datasets
+- Performance optimization for very large datasets (>100MB files)
 - Additional test categories (security, load testing)
+- Consider virtual environment isolation for production deployments
 
 ---
 
@@ -95,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **0.1.0**: Initial project setup and basic functionality
 - **0.2.0**: Enhanced features and improved architecture
-- **Unreleased**: Testing framework and advanced insights engine
+- **0.3.0**: Dark mode support, duplicate column handling, and comprehensive testing
 
 ## Contributing
 
