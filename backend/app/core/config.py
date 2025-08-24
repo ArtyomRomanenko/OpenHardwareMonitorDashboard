@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     default_time_range_days: int = 7
     max_time_range_days: int = 365
     
+    # API timeout settings
+    request_timeout_seconds: int = 300  # 5 minutes timeout for large requests
+    max_data_points_per_request: int = 50000  # Limit data points for performance
+    
+    # Data processing optimization
+    enable_data_sampling: bool = True  # Enable sampling for large datasets
+    sampling_ratio: float = 0.1  # Sample 10% of data for large datasets
+    
     class Config:
         env_file = ".env"
 

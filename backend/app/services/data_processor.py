@@ -211,6 +211,19 @@ class DataProcessor:
             
             print(f"Processing {len(dates_in_range)} dates: {dates_in_range}")
             
+            # Check if we need to enable data sampling for large datasets
+            total_estimated_rows = len(dates_in_range) * 10000  # Rough estimate
+            enable_sampling = settings.enable_data_sampling and total_estimated_rows > settings.max_data_points_per_request
+            
+            if enable_sampling:
+                print(f"Large dataset detected ({total_estimated_rows} estimated rows), enabling sampling")
+                # For large datasets, process fewer dates or sample data
+                if len(dates_in_range) > 10:
+                    # For very large ranges, sample dates
+                    step = max(1, len(dates_in_range) // 10)
+                    dates_in_range = dates_in_range[::step]
+                    print(f"Sampled to {len(dates_in_range)} dates for performance")
+            
             # Process each date and combine data
             all_data = []
             for date in dates_in_range:
@@ -222,6 +235,12 @@ class DataProcessor:
                     if not df.empty:
                         df = self.process_csv_data(df, date)
                         if not df.empty:
+                            # Apply sampling if enabled and dataset is large
+                            if enable_sampling and len(df) > 5000:
+                                sample_size = int(len(df) * settings.sampling_ratio)
+                                df = df.sample(n=sample_size, random_state=42).sort_index()
+                                print(f"Sampled {len(df)} rows from {date}")
+                            
                             all_data.append(df)
                             print(f"Successfully processed {date}: {len(df)} rows")
                         else:

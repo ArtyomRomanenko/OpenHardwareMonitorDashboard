@@ -24,12 +24,29 @@ async def get_dashboard_overview(
         start_date_str = start_date.strftime("%Y-%m-%d")
         end_date_str = end_date.strftime("%Y-%m-%d")
         
+        print(f"Dashboard overview request: {days} days ({start_date_str} to {end_date_str})")
+        
         # Get system info
         system_info = data_processor.get_system_info()
         
         # Get quick overview data directly
         key_metrics = [MetricType.CPU_TEMP, MetricType.GPU_TEMP, MetricType.CPU_USAGE, MetricType.MEMORY_USAGE]
-        metrics_data = data_processor.get_metrics_for_period(start_date_str, end_date_str, key_metrics)
+        
+        # For larger date ranges, use optimized processing
+        if days > 10:
+            print(f"Large date range ({days} days), using optimized processing")
+            # Enable sampling for large datasets
+            from app.core.config import settings
+            original_sampling = settings.enable_data_sampling
+            settings.enable_data_sampling = True
+            
+            try:
+                metrics_data = data_processor.get_metrics_for_period(start_date_str, end_date_str, key_metrics)
+            finally:
+                # Restore original setting
+                settings.enable_data_sampling = original_sampling
+        else:
+            metrics_data = data_processor.get_metrics_for_period(start_date_str, end_date_str, key_metrics)
         
         overview = {
             "metrics": {},
