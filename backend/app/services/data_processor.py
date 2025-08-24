@@ -149,9 +149,21 @@ class DataProcessor:
             for col in df.columns:
                 if col != 'timestamp' and col != 'Time':
                     try:
-                        # Try to convert to numeric, coercing errors to NaN
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
-                        numeric_columns.append(col)
+                        # Handle duplicate columns (DataFrame) vs single columns (Series)
+                        column_data = df[col]
+                        if isinstance(column_data, pd.DataFrame):
+                            # For duplicate columns, use the first sub-column
+                            column_data = column_data.iloc[:, 0]
+                            # Rename the column to avoid conflicts
+                            new_col_name = f"{col}_1"
+                            df[new_col_name] = column_data
+                            # Try to convert the new column to numeric
+                            df[new_col_name] = pd.to_numeric(df[new_col_name], errors='coerce')
+                            numeric_columns.append(new_col_name)
+                        else:
+                            # Single column, convert directly
+                            df[col] = pd.to_numeric(df[col], errors='coerce')
+                            numeric_columns.append(col)
                     except Exception as e:
                         print(f"Could not convert column {col} to numeric: {e}")
                         continue
@@ -263,12 +275,12 @@ class DataProcessor:
             # Map metric types to column names (Open Hardware Monitor format)
             metric_mapping = {
                 MetricType.CPU_TEMP: ['CPU Total'],  # CPU Total represents overall CPU load/temp
-                MetricType.GPU_TEMP: ['GPU Core'],   # GPU Core temperature
+                MetricType.GPU_TEMP: ['GPU Core', 'GPU Core_1'],   # GPU Core temperature (handle duplicates)
                 MetricType.CPU_USAGE: ['CPU Total'], # CPU Total usage percentage
-                MetricType.GPU_USAGE: ['GPU Core'],  # GPU Core usage
+                MetricType.GPU_USAGE: ['GPU Core', 'GPU Core_1'],  # GPU Core usage (handle duplicates)
                 MetricType.FAN_SPEED: ['GPU Fan'],   # GPU Fan speed
                 MetricType.MEMORY_USAGE: ['Memory'], # Memory usage percentage
-                MetricType.DISK_USAGE: ['Used Space'] # Disk usage
+                MetricType.DISK_USAGE: ['Used Space', 'Used Space_1'] # Disk usage (handle duplicates)
             }
             
             # Also try to map individual CPU cores for temperature analysis
@@ -421,7 +433,10 @@ class DataProcessor:
             # Extract memory usage (average of Memory column)
             if 'Memory' in df.columns:
                 try:
-                    memory_values = pd.to_numeric(df['Memory'], errors='coerce').dropna()
+                    memory_data = df['Memory']
+                    if isinstance(memory_data, pd.DataFrame):
+                        memory_data = memory_data.iloc[:, 0]  # Use first column for duplicates
+                    memory_values = pd.to_numeric(memory_data, errors='coerce').dropna()
                     if len(memory_values) > 0:
                         system_info['memory_usage_avg'] = float(memory_values.mean())
                         print(f"Memory usage avg: {system_info['memory_usage_avg']}")
@@ -432,7 +447,10 @@ class DataProcessor:
             # Extract GPU memory (GPU Memory Total column)
             if 'GPU Memory Total' in df.columns:
                 try:
-                    gpu_memory_values = pd.to_numeric(df['GPU Memory Total'], errors='coerce').dropna()
+                    gpu_memory_data = df['GPU Memory Total']
+                    if isinstance(gpu_memory_data, pd.DataFrame):
+                        gpu_memory_data = gpu_memory_data.iloc[:, 0]  # Use first column for duplicates
+                    gpu_memory_values = pd.to_numeric(gpu_memory_data, errors='coerce').dropna()
                     if len(gpu_memory_values) > 0:
                         system_info['gpu_memory'] = float(gpu_memory_values.mean())
                         print(f"GPU memory avg: {system_info['gpu_memory']}")
@@ -443,7 +461,10 @@ class DataProcessor:
             # Extract disk usage (Used Space column)
             if 'Used Space' in df.columns:
                 try:
-                    disk_values = pd.to_numeric(df['Used Space'], errors='coerce').dropna()
+                    disk_data = df['Used Space']
+                    if isinstance(disk_data, pd.DataFrame):
+                        disk_data = disk_data.iloc[:, 0]  # Use first column for duplicates
+                    disk_values = pd.to_numeric(disk_data, errors='coerce').dropna()
                     if len(disk_values) > 0:
                         system_info['disk_usage'] = float(disk_values.mean())
                         print(f"Disk usage avg: {system_info['disk_usage']}")

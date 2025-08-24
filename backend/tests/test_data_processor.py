@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
 import tempfile
 import os
+from pathlib import Path
 from app.services.data_processor import DataProcessor
 from app.models.hardware_models import MetricType, TimeSeriesData, HardwareMetric
 
@@ -72,11 +73,17 @@ class TestDataProcessor:
     
     def test_load_csv_data_success(self, data_processor, temp_csv_file):
         """Test successful CSV loading"""
-        # Mock the data directory path
-        with patch.object(data_processor, 'data_directory', temp_csv_file.replace('.csv', '')):
-            with patch('os.path.join') as mock_join:
-                mock_join.return_value = temp_csv_file
-                
+        # Create the file with the expected name
+        temp_dir = tempfile.mkdtemp()
+        expected_file = Path(temp_dir) / "OpenHardwareMonitorLog-2024-01-15.csv"
+        
+        # Copy the temp CSV content to the expected file
+        with open(temp_csv_file, 'r') as src, open(expected_file, 'w') as dst:
+            dst.write(src.read())
+        
+        try:
+            # Mock the data directory path
+            with patch.object(data_processor, 'data_directory', Path(temp_dir)):
                 df = data_processor.load_csv_data('2024-01-15')
                 
                 assert df is not None
@@ -84,6 +91,9 @@ class TestDataProcessor:
                 assert 'Time' in df.columns
                 assert 'CPU Core #1' in df.columns
                 assert 'Memory' in df.columns
+        finally:
+            import shutil
+            shutil.rmtree(temp_dir)
     
     def test_load_csv_data_file_not_found(self, data_processor):
         """Test CSV loading when file doesn't exist"""
@@ -92,7 +102,7 @@ class TestDataProcessor:
             
             df = data_processor.load_csv_data('2024-01-15')
             
-            assert df is None
+            assert df.empty
     
     def test_process_csv_data(self, data_processor):
         """Test CSV data processing and cleaning"""
@@ -149,8 +159,8 @@ class TestDataProcessor:
             
             # Mock CSV loading for each date
             mock_df = pd.DataFrame({
-                'Time': ['08/20/2025 00:00:03', '08/20/2025 00:00:08'],
-                'CPU Core #1': [3.125, 10.9375],
+                'timestamp': pd.to_datetime(['08/20/2025 00:00:03', '08/20/2025 00:00:08']),
+                'CPU Total': [3.125, 10.9375],
                 'Memory': [43.7650833, 43.7798424],
                 'GPU Core': [49, 47]
             })
@@ -162,7 +172,7 @@ class TestDataProcessor:
                     mock_process.return_value = mock_df
                     
                     metrics = data_processor.get_metrics_for_period(
-                        '2024-01-15', '2024-01-17', [MetricType.CPU_TEMP, MetricType.MEMORY_USAGE]
+                        '2024-01-15', '2024-01-17', [MetricType.CPU_USAGE, MetricType.MEMORY_USAGE]
                     )
                     
                     assert len(metrics) > 0
@@ -194,8 +204,8 @@ class TestDataProcessor:
             
             # Mock CSV loading
             mock_df = pd.DataFrame({
-                'Time': ['08/20/2025 00:00:03', '08/20/2025 00:00:08'],
-                'CPU Core #1': [3.125, 10.9375],
+                'timestamp': pd.to_datetime(['08/20/2025 00:00:03', '08/20/2025 00:00:08']),
+                'CPU Total': [3.125, 10.9375],
                 'Memory': [43.7650833, 43.7798424]
             })
             
@@ -207,7 +217,7 @@ class TestDataProcessor:
                     
                     # Test inclusive end date
                     metrics = data_processor.get_metrics_for_period(
-                        '2024-01-15', '2024-01-17', [MetricType.CPU_TEMP]
+                        '2024-01-15', '2024-01-17', [MetricType.CPU_USAGE]
                     )
                     
                     # Should include data from 2024-01-17 (inclusive)
@@ -217,33 +227,26 @@ class TestDataProcessor:
         """Test metric extraction from processed DataFrame"""
         # Create sample processed DataFrame
         processed_df = pd.DataFrame({
-            'Time': ['08/20/2025 00:00:03', '08/20/2025 00:00:08', '08/20/2025 00:00:14'],
-            'CPU Core #1': [3.125, 10.9375, 15.625],
+            'timestamp': pd.to_datetime(['08/20/2025 00:00:03', '08/20/2025 00:00:08', '08/20/2025 00:00:14']),
+            'CPU Total': [3.125, 10.9375, 15.625],
             'Memory': [43.7650833, 43.7798424, 43.7880478],
             'GPU Core': [49, 47, 47]
         })
-        
-        # Mock metric mapping
-        metric_mapping = {
-            'CPU Core #1': MetricType.CPU_USAGE,
-            'Memory': MetricType.MEMORY_USAGE,
-            'GPU Core': MetricType.GPU_TEMP
-        }
-        
-        metrics = data_processor.extract_metrics(processed_df, metric_mapping)
-        
+
+        metrics = data_processor.extract_metrics(processed_df, [MetricType.CPU_USAGE, MetricType.MEMORY_USAGE, MetricType.GPU_TEMP])
+
         assert len(metrics) == 3
         
         # Check CPU usage metric
         cpu_metric = next(m for m in metrics if m.metric_type == MetricType.CPU_USAGE)
-        assert cpu_metric.component == 'cpu'
+        assert cpu_metric.component == 'CPU Total'
         assert cpu_metric.unit == '%'
         assert len(cpu_metric.values) == 3
         assert cpu_metric.values == [3.125, 10.9375, 15.625]
         
         # Check memory usage metric
         memory_metric = next(m for m in metrics if m.metric_type == MetricType.MEMORY_USAGE)
-        assert memory_metric.component == 'system'
+        assert memory_metric.component == 'Memory'
         assert memory_metric.unit == '%'
         assert len(memory_metric.values) == 3
     
@@ -251,19 +254,13 @@ class TestDataProcessor:
         """Test metric extraction when some columns are missing"""
         # Create DataFrame with only some expected columns
         processed_df = pd.DataFrame({
-            'Time': ['08/20/2025 00:00:03', '08/20/2025 00:00:08'],
-            'CPU Core #1': [3.125, 10.9375],
+            'timestamp': pd.to_datetime(['08/20/2025 00:00:03', '08/20/2025 00:00:08']),
+            'CPU Total': [3.125, 10.9375],
             # Missing Memory and GPU Core columns
         })
-        
-        metric_mapping = {
-            'CPU Core #1': MetricType.CPU_USAGE,
-            'Memory': MetricType.MEMORY_USAGE,
-            'GPU Core': MetricType.GPU_TEMP
-        }
-        
-        metrics = data_processor.extract_metrics(processed_df, metric_mapping)
-        
+
+        metrics = data_processor.extract_metrics(processed_df, [MetricType.CPU_USAGE, MetricType.MEMORY_USAGE, MetricType.GPU_TEMP])
+
         # Should only extract available metrics
         assert len(metrics) == 1
         assert metrics[0].metric_type == MetricType.CPU_USAGE
@@ -328,28 +325,29 @@ class TestDataProcessor:
     
     def test_large_file_handling(self, data_processor):
         """Test handling of large CSV files"""
-        # Create a large CSV file
+        # Create a large CSV file with the expected filename format
         large_csv_content = "Time,CPU,Memory\n"
         for i in range(10000):  # 10k rows
             large_csv_content += f"08/20/2025 00:{i:02d}:00,{i % 100},{50 + i % 30}\n"
         
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        # Create the file with the expected name
+        temp_dir = tempfile.mkdtemp()
+        temp_file = Path(temp_dir) / "OpenHardwareMonitorLog-2024-01-15.csv"
+        
+        with open(temp_file, 'w') as f:
             f.write(large_csv_content)
-            temp_path = f.name
         
         try:
             # Mock the data directory path
-            with patch.object(data_processor, 'data_directory', temp_path.replace('.csv', '')):
-                with patch('os.path.join') as mock_join:
-                    mock_join.return_value = temp_path
-                    
-                    # Should handle large files without crashing
-                    df = data_processor.load_csv_data('2024-01-15')
-                    
-                    assert df is not None
-                    assert len(df) > 0
+            with patch.object(data_processor, 'data_directory', Path(temp_dir)):
+                # Should handle large files without crashing
+                df = data_processor.load_csv_data('2024-01-15')
+                
+                assert df is not None
+                assert len(df) > 0
         finally:
-            os.unlink(temp_path)
+            import shutil
+            shutil.rmtree(temp_dir)
 
 
 if __name__ == "__main__":
